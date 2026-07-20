@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#07111f" />
+  <meta name="description" content="生命線 Lifeline：把每日任務、能力成長與生命價值連結起來。" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+  <title>生命線 Lifeline</title>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span></div>
+      <div>
+        <div class="brand-title">生命線</div>
+        <div class="brand-subtitle">LIFELINE · PERSONAL VALUE SYSTEM</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="installBtn" class="button ghost hidden">安裝 App</button>
+      <button id="addTaskBtn" class="button primary">＋ 新增任務</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="tabs" aria-label="主選單">
+      <button class="tab active" data-view="dashboard">今日生命線</button>
+      <button class="tab" data-view="tasks">任務庫</button>
+      <button class="tab" data-view="history">歷史紀錄</button>
+      <button class="tab" data-view="settings">設定</button>
+    </nav>
+
+    <section id="dashboardView" class="view active">
+      <div class="hero-grid">
+        <article class="card total-card">
+          <div class="eyebrow">生命總值</div>
+          <div class="total-value"><span class="currency">LV$</span><span id="totalValue">0</span></div>
+          <div class="delta-row">
+            <span id="todayDelta" class="positive">今日 ＋0</span>
+            <span id="currentTimeLabel">更新中</span>
+          </div>
+          <canvas id="lifelineCanvas" width="900" height="260" aria-label="生命價值走勢圖"></canvas>
+          <div class="chart-legend">
+            <span><i class="legend-dot live"></i>今日累積</span>
+            <span><i class="legend-dot baseline"></i>生命基準</span>
+          </div>
+        </article>
+
+        <article class="card speed-card">
+          <div class="eyebrow">目前生命速度</div>
+          <div class="speed-value"><span id="currentRate">0</span><small>LV$/h</small></div>
+          <div class="speed-meter"><div id="speedMeterFill"></div></div>
+          <div class="metric-list">
+            <div><span>最近 30 分鐘</span><strong id="instantRate">0</strong></div>
+            <div><span>今日平均</span><strong id="dailyRate">0</strong></div>
+            <div><span>生命效率</span><strong id="efficiencyRate">0</strong></div>
+          </div>
+          <div class="next-refresh">
+            <span>下次刷新</span>
+            <strong id="refreshCountdown">30:00</strong>
+          </div>
+        </article>
+      </div>
+
+      <section class="dimension-grid" id="dimensionGrid" aria-label="生命五維"></section>
+
+      <div class="content-grid">
+        <section class="card timeline-card">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">今日排程</div>
+              <h2 id="todayTitle">今日生命線</h2>
+            </div>
+            <button id="autoScheduleBtn" class="button ghost small">重新排程</button>
+          </div>
+          <div id="timeline" class="timeline"></div>
+        </section>
+
+        <aside class="side-stack">
+          <section class="card focus-card">
+            <div class="eyebrow">下一個行動</div>
+            <div id="focusTask" class="focus-task"></div>
+          </section>
+          <section class="card debt-card">
+            <div class="eyebrow">維護債</div>
+            <div id="debtSummary" class="debt-summary"></div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section id="tasksView" class="view">
+      <div class="section-head page-head">
+        <div>
+          <div class="eyebrow">所有任務</div>
+          <h1>任務庫</h1>
+        </div>
+        <div class="task-filters">
+          <select id="taskFilterCategory" aria-label="任務分類篩選">
+            <option value="all">全部面向</option>
+            <option value="health">健康</option>
+            <option value="intelligence">智力</option>
+            <option value="wealth">財富</option>
+            <option value="status">地位</option>
+            <option value="skill">技能</option>
+          </select>
+          <select id="taskFilterStatus" aria-label="任務狀態篩選">
+            <option value="all">全部狀態</option>
+            <option value="pending">待完成</option>
+            <option value="completed">已完成</option>
+          </select>
+        </div>
+      </div>
+      <div id="taskLibrary" class="task-library"></div>
+    </section>
+
+    <section id="historyView" class="view">
+      <div class="section-head page-head">
+        <div>
+          <div class="eyebrow">價值足跡</div>
+          <h1>歷史紀錄</h1>
+        </div>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <section id="settingsView" class="view">
+      <div class="section-head page-head">
+        <div>
+          <div class="eyebrow">系統設定</div>
+          <h1>生命線控制台</h1>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <section class="card settings-card">
+          <h3>價值換算</h3>
+          <label>生命價值貨幣名稱<input id="currencyName" type="text" maxlength="8" /></label>
+          <label>每日可排程時數<input id="availableHours" type="number" min="1" max="18" step="0.5" /></label>
+          <label>自動排程使用比例<input id="scheduleLoad" type="range" min="30" max="90" step="5" /><span id="scheduleLoadLabel"></span></label>
+          <label>起床時間<input id="wakeTime" type="time" /></label>
+          <label>睡眠時間<input id="sleepTime" type="time" /></label>
+          <button id="saveSettingsBtn" class="button primary full">儲存設定</button>
+        </section>
+
+        <section class="card settings-card">
+          <h3>資料管理</h3>
+          <p>所有資料預設儲存在這台裝置的瀏覽器中，不會自動上傳。</p>
+          <button id="exportBtn" class="button ghost full">匯出 JSON 備份</button>
+          <label class="file-button button ghost full">匯入 JSON<input id="importInput" type="file" accept="application/json" /></label>
+          <button id="seedBtn" class="button ghost full">載入示範任務</button>
+          <button id="resetBtn" class="button danger full">清除全部資料</button>
+        </section>
+
+        <section class="card settings-card">
+          <h3>計算原則</h3>
+          <p>任務價值 = 基礎價值 × 完成比例 × 品質 × 難度 × 持續 × 槓桿。</p>
+          <p>「目前生命速度」採加權平均，休息不會立即歸零，但長時間無有效行動會逐步下降。</p>
+          <p>未完成任務不扣除已累積價值，而是形成可被清除的維護債。</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="taskDialog" class="modal">
+    <form id="taskForm" method="dialog">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">建立行動</div>
+          <h2 id="taskDialogTitle">新增任務</h2>
+        </div>
+        <button type="button" class="icon-button" data-close="taskDialog" aria-label="關閉">×</button>
+      </div>
+      <input id="taskId" type="hidden" />
+      <div class="form-grid">
+        <label class="span-2">任務名稱<input id="taskTitle" required maxlength="60" placeholder="例如：完成生命線首頁原型" /></label>
+        <label>主要面向<select id="taskCategory" required>
+          <option value="health">健康</option>
+          <option value="intelligence">智力</option>
+          <option value="wealth">財富</option>
+          <option value="status">地位</option>
+          <option value="skill" selected>技能</option>
+        </select></label>
+        <label>預估時間（分鐘）<input id="taskDuration" type="number" min="5" max="720" step="5" value="30" required /></label>
+        <label>基礎價值<input id="taskValue" type="number" min="0" max="1000000" step="10" value="200" required /></label>
+        <label>精神消耗<input id="taskEnergy" type="number" min="1" max="100" step="1" value="30" required /></label>
+        <label>重複方式<select id="taskRepeat">
+          <option value="once">單次</option>
+          <option value="daily">每天</option>
+          <option value="interval">完成後按間隔重複</option>
+          <option value="weekly">每週</option>
+        </select></label>
+        <label>固定時間<input id="taskTime" type="time" /></label>
+        <label id="intervalField" class="hidden">間隔（分鐘）<input id="taskInterval" type="number" min="30" max="10080" step="30" value="120" /></label>
+        <label id="weekdayField" class="hidden">每週星期<select id="taskWeekday">
+          <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option>
+          <option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
+        </select></label>
+        <label>優先度<select id="taskPriority"><option value="1">低</option><option value="2" selected>中</option><option value="3">高</option><option value="4">關鍵</option></select></label>
+        <label>難度係數<input id="taskDifficulty" type="number" min="0.5" max="2" step="0.1" value="1" /></label>
+        <label>槓桿係數<input id="taskLeverage" type="number" min="0.5" max="3" step="0.1" value="1" /></label>
+        <label class="span-2">說明<textarea id="taskNotes" rows="3" maxlength="300" placeholder="完成標準、必要資料或提醒"></textarea></label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="button ghost" data-close="taskDialog">取消</button>
+        <button type="submit" class="button primary">儲存任務</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="completeDialog" class="modal compact">
+    <form id="completeForm" method="dialog">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">任務結算</div>
+          <h2 id="completeTaskTitle">完成任務</h2>
+        </div>
+        <button type="button" class="icon-button" data-close="completeDialog" aria-label="關閉">×</button>
+      </div>
+      <input id="completeTaskId" type="hidden" />
+      <label>完成比例 <span id="completionLabel">100%</span><input id="completionRatio" type="range" min="10" max="100" step="5" value="100" /></label>
+      <label>完成品質<select id="qualityFactor"><option value="0.8">快速完成</option><option value="1" selected>正常完成</option><option value="1.15">高品質完成</option><option value="1.3">超出預期</option></select></label>
+      <label>實際耗時（分鐘）<input id="actualMinutes" type="number" min="1" max="1440" value="30" required /></label>
+      <label>完成筆記<textarea id="completionNote" rows="3" maxlength="300" placeholder="成果、連結或下一步"></textarea></label>
+      <div id="completionPreview" class="completion-preview"></div>
+      <div class="modal-actions">
+        <button type="button" class="button ghost" data-close="completeDialog">取消</button>
+        <button type="submit" class="button primary">結算價值</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
