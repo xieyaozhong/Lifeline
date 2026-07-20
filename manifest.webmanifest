@@ -1,0 +1,13 @@
+{
+  "name": "生命線 Lifeline",
+  "short_name": "生命線",
+  "description": "把每日任務、能力成長與生命價值連結起來。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "lang": "zh-Hant",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
