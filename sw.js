@@ -1,10 +1,19 @@
-const CACHE = 'lifeline-cache-v2';
+const CACHE = 'lifeline-cache-v3';
 const BASE = new URL('./', self.location.href);
 const ASSETS = [
   './',
   './index.html',
   './style.css',
+  './features.css',
   './app.js',
+  './app-loader.js',
+  './app-v2.01.part',
+  './app-v2.02.part',
+  './app-v2.03.part',
+  './app-v2.04.part',
+  './app-v2.05.part',
+  './app-v2.06.part',
+  './app-v2.07.part',
   './manifest.webmanifest',
   './icon.svg'
 ].map(path => new URL(path, BASE).toString());
