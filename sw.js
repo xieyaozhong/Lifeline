@@ -1,4 +1,4 @@
-const CACHE = 'lifeline-suite-cache-v4';
+const CACHE = 'lifeline-suite-cache-v5';
 const BASE = new URL('./', self.location.href);
 const ASSETS = [
   './',
@@ -28,6 +28,10 @@ const ASSETS = [
   './schedule-studio/app.js',
   './schedule-studio/child-day.css',
   './schedule-studio/child-day.js',
+  './self-training-checklist/',
+  './self-training-checklist/index.html',
+  './self-training-checklist/style.css',
+  './self-training-checklist/app.js',
   './appointment-generator/',
   './appointment-generator/index.html',
   './appointment-generator/style.css',
@@ -54,6 +58,7 @@ self.addEventListener('activate', (event) => {
 function offlineFallback(requestUrl) {
   const path = new URL(requestUrl).pathname;
   if (path.includes('/appointment-generator/')) return new URL('./appointment-generator/index.html', BASE).toString();
+  if (path.includes('/self-training-checklist/')) return new URL('./self-training-checklist/index.html', BASE).toString();
   if (path.includes('/schedule-studio/')) return new URL('./schedule-studio/index.html', BASE).toString();
   if (path.includes('/portal/')) return new URL('./portal/index.html', BASE).toString();
   return new URL('./index.html', BASE).toString();
