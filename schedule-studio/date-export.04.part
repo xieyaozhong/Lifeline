@@ -37,13 +37,13 @@
       const canvas = drawItinerary(data);
       const blob = await canvasBlob(canvas);
       const filename = `時序環-${data.key}-行程課表.png`;
-      const file = new File([blob], filename, { type: 'image/png' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      const shareFile = typeof File === 'function' ? new File([blob], filename, { type: 'image/png' }) : null;
+      if (shareFile && navigator.share && navigator.canShare?.({ files: [shareFile] })) {
         try {
           await navigator.share({
             title: `${formatLongDate(data.key)} 行程課表`,
             text: `時序環行程課表，共 ${data.sessions.length} 個行程。`,
-            files: [file]
+            files: [shareFile]
           });
           showToast('行程課表已開啟分享選單。');
         } catch (error) {
