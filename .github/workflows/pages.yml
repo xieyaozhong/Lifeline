@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: lifeline-pages
   cancel-in-progress: true
 
 jobs:
@@ -20,29 +20,49 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Configure Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 
-      - name: Validate web applications
+      - name: Validate JavaScript and local links
+        shell: bash
         run: |
+          set -euo pipefail
           cat app-v2.*.part > /tmp/lifeline-v2.js
           node --check /tmp/lifeline-v2.js
-          node --check schedule-studio/app.js
-          node --check schedule-studio/child-day.js
-          node --check appointment-generator/app.js
+          find . -type f -name '*.js' -not -path './.git/*' -print0 | xargs -0 -n1 node --check
+          python scripts/validate_site.py
 
-      - name: Prepare static site
+      - name: Build static site
+        shell: bash
         run: |
-          mkdir -p _site
-          cp index.html style.css features.css app.js app-loader.js app-v2.*.part manifest.webmanifest sw.js icon.svg .nojekyll _site/
-          cp -R schedule-studio _site/
-          cp -R appointment-generator _site/
+          set -euo pipefail
+          python scripts/build_site.py
+          test -f _site/index.html
+          test -f _site/portal/index.html
+          test -f _site/schedule-studio/index.html
+          test -f _site/appointment-generator/index.html
+          test -f _site/build-info.json
 
-      - name: Upload static site
+      - name: Write deployment summary
+        shell: bash
+        run: |
+          {
+            echo '## Lifeline Pages build'
+            echo ''
+            echo '- Main app: `/Lifeline/`'
+            echo '- Project portal: `/Lifeline/portal/`'
+            echo '- Schedule Studio: `/Lifeline/schedule-studio/`'
+            echo '- Appointment Generator: `/Lifeline/appointment-generator/`'
+            echo '- Commit: `${{ github.sha }}`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
