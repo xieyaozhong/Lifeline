@@ -32,6 +32,7 @@ jobs:
           cat app-v2.*.part > /tmp/lifeline-v2.js
           node --check /tmp/lifeline-v2.js
           node --check schedule-studio/app.js
+          node --check schedule-studio/child-day.js
 
       - name: Prepare static site
         run: |
