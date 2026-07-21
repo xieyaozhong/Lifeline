@@ -33,12 +33,14 @@ jobs:
           node --check /tmp/lifeline-v2.js
           node --check schedule-studio/app.js
           node --check schedule-studio/child-day.js
+          node --check appointment-generator/app.js
 
       - name: Prepare static site
         run: |
           mkdir -p _site
           cp index.html style.css features.css app.js app-loader.js app-v2.*.part manifest.webmanifest sw.js icon.svg .nojekyll _site/
           cp -R schedule-studio _site/
+          cp -R appointment-generator _site/
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v4
