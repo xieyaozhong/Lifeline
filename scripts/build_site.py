@@ -14,7 +14,13 @@ ROOT_FILES = [
     "robots.txt", "sitemap.xml",
 ]
 ROOT_GLOBS = ["app-v2.*.part"]
-DIRECTORIES = ["shared", "portal", "schedule-studio", "appointment-generator"]
+DIRECTORIES = [
+    "shared",
+    "portal",
+    "schedule-studio",
+    "appointment-generator",
+    "self-training-checklist",
+]
 
 
 def copy_site() -> None:
@@ -64,7 +70,13 @@ def write_build_info() -> None:
         "sha": os.getenv("GITHUB_SHA", "local-build"),
         "ref": os.getenv("GITHUB_REF_NAME", "local"),
         "builtAt": datetime.now(timezone.utc).isoformat(),
-        "applications": ["lifeline", "portal", "schedule-studio", "appointment-generator"],
+        "applications": [
+            "lifeline",
+            "portal",
+            "schedule-studio",
+            "appointment-generator",
+            "self-training-checklist",
+        ],
     }
     (OUTPUT / "build-info.json").write_text(
         json.dumps(info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
