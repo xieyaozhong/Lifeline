@@ -19,7 +19,7 @@
     { id: 'portal', name: '專案中心', detail: '所有工具、部署狀態與入口', icon: '◎', href: 'portal/' },
     { id: 'lifeline', name: '生命線', detail: '任務、生命價值與即時推薦', icon: '✦', href: '' },
     { id: 'schedule', name: '時序環', detail: '圓形課表、三日總覽與兒童全天課程', icon: '◷', href: 'schedule-studio/' },
-    { id: 'training', name: '自主訓練自核單', detail: '題量排程、自核紀錄與回課分析', icon: '✓', href: 'self-training-checklist/' },
+    { id: 'training', name: '自主訓練自核單', detail: '嚴格排程、國中數學題庫、自核與回課分析', icon: '✓', href: 'self-training-checklist/' },
     { id: 'appointment', name: '約定產生器', detail: 'LINE 預約深連結與 QR Code', icon: '⌗', href: 'appointment-generator/' }
   ];
 
