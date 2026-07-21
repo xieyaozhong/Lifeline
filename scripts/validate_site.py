@@ -62,6 +62,7 @@ def main() -> int:
         ROOT / "portal/index.html",
         ROOT / "schedule-studio/index.html",
         ROOT / "appointment-generator/index.html",
+        ROOT / "self-training-checklist/index.html",
     ]
     for path in required:
         if not path.exists():
