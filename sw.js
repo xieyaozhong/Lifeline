@@ -1,4 +1,4 @@
-const CACHE = 'lifeline-suite-cache-v5';
+const CACHE = 'lifeline-suite-cache-v6';
 const BASE = new URL('./', self.location.href);
 const ASSETS = [
   './',
@@ -32,6 +32,12 @@ const ASSETS = [
   './self-training-checklist/index.html',
   './self-training-checklist/style.css',
   './self-training-checklist/app.js',
+  './self-training-checklist/question-bank.css',
+  './self-training-checklist/question-bank-loader.js',
+  './self-training-checklist/question-bank.01.part',
+  './self-training-checklist/question-bank.02.part',
+  './self-training-checklist/question-bank.03.part',
+  './self-training-checklist/question-bank.04.part',
   './appointment-generator/',
   './appointment-generator/index.html',
   './appointment-generator/style.css',
