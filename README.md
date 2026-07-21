@@ -1,12 +1,13 @@
 # 生命線 Lifeline Suite
 
-一套整合個人任務、生命價值、課程安排與 LINE 預約入口的瀏覽器工具系統。
+一套整合個人任務、生命價值、課程安排、自主訓練與 LINE 預約入口的瀏覽器工具系統。
 
 ## 線上入口
 
 - 生命線：`https://xieyaozhong.github.io/Lifeline/`
 - 專案中心：`https://xieyaozhong.github.io/Lifeline/portal/`
 - 時序環：`https://xieyaozhong.github.io/Lifeline/schedule-studio/`
+- 自主訓練自核單：`https://xieyaozhong.github.io/Lifeline/self-training-checklist/`
 - 約定產生器：`https://xieyaozhong.github.io/Lifeline/appointment-generator/`
 
 所有頁面右下角都有共用的 Lifeline 工具切換面板。
@@ -28,6 +29,15 @@
 - 3～12 歲兒童 09:00–17:00 全天課程
 - 依年齡、場域與活動類型自動安排休息、午餐與教室
 
+### 自主訓練自核單
+
+- 依每日題量與可用時間建立嚴格訓練時間線
+- 強制拆分解題、檢討、休息與彈性緩衝
+- 單輪延誤加重上限 20%，無法吸收的題量轉為下次待補
+- 學生自核作答題數、正確率、耗時、檢討時間、體感難度與卡關原因
+- 14 日趨勢、主題診斷、教師摘要與下次練習量建議
+- JSON 匯出與可列印的每日自核單
+
 ### 約定產生器
 
 - LINE 官方帳號預約訊息模板
@@ -36,7 +46,7 @@
 
 ## 資料儲存
 
-目前任務、課表與常用約定預設保存在瀏覽器 `localStorage`。清除網站資料前，請先匯出需要保留的資料。
+目前任務、課表、自核紀錄與常用約定預設保存在瀏覽器 `localStorage`。清除網站資料前，請先匯出需要保留的資料。
 
 ## 本機執行
 
@@ -72,7 +82,7 @@ python3 scripts/build_site.py
 2. 檢查所有 JavaScript 語法。
 3. 檢查 HTML 重複 ID 與本機檔案連結。
 4. 建置完整 `_site`。
-5. 驗證四個應用程式入口與部署資訊。
+5. 驗證五個應用程式入口與部署資訊。
 6. 上傳並發布 GitHub Pages。
 
 Pull Request 另有 `.github/workflows/validate.yml`，只執行驗證與建置，不會發布網站。
