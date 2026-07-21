@@ -1,0 +1,164 @@
+    try { return JSON.parse(localStorage.getItem(TRAINING_STORAGE_KEY)); } catch { return null; }
+  }
+
+  function writeTrainingState(state) { localStorage.setItem(TRAINING_STORAGE_KEY, JSON.stringify(state)); }
+
+  function switchToBank(save = true) {
+    document.querySelectorAll('.view-tab').forEach((button) => button.classList.toggle('active', button.dataset.view === 'bank'));
+    document.querySelectorAll('.view-panel').forEach((panel) => panel.classList.toggle('active', panel.id === 'bankView'));
+    if (save) {
+      const training = readTrainingState();
+      if (training) { training.activeView = 'bank'; writeTrainingState(training); }
+    }
+    renderLifetimeStats(); renderHistory();
+  }
+
+  function populateSettings() {
+    $('qbGrade').value = bankState.settings.grade;
+    $('qbDifficulty').value = bankState.settings.difficulty;
+    $('qbCount').value = bankState.settings.count;
+    $('qbMode').value = bankState.settings.mode;
+    $('qbMinutes').value = bankState.settings.minutes;
+    $('qbMinutes').disabled = bankState.settings.mode !== 'exam';
+  }
+
+  function eligibleTopics() {
+    const grade = $('qbGrade')?.value || bankState.settings.grade;
+    return TOPICS.filter((topic) => grade === 'all' || topic.grade === grade);
+  }
+
+  function renderTopicChecks() {
+    if (!$('qbTopicChecks')) return;
+    const eligible = eligibleTopics();
+    const selected = new Set(bankState.settings.topics);
+    $('qbTopicChecks').innerHTML = eligible.map((topic) => `<label class="qb-topic-check"><input type="checkbox" value="${topic.id}" ${selected.has(topic.id) ? 'checked' : ''}><span>${escapeHtml(topic.name)}<small>${topic.code}</small></span></label>`).join('');
+    $('qbTopicChecks').querySelectorAll('input').forEach((input) => input.addEventListener('change', saveSettingsFromForm));
+    updateCoverageBadge();
+  }
+
+  function selectedTopicsFromForm() { return [...document.querySelectorAll('#qbTopicChecks input:checked')].map((input) => input.value); }
+
+  function saveSettingsFromForm() {
+    bankState.settings = {
+      grade: $('qbGrade').value,
+      difficulty: $('qbDifficulty').value,
+      count: clamp(Number($('qbCount').value || 10), 5, 40),
+      mode: $('qbMode').value,
+      minutes: clamp(Number($('qbMinutes').value || 20), 5, 120),
+      topics: selectedTopicsFromForm()
+    };
+    $('qbMinutes').disabled = bankState.settings.mode !== 'exam';
+    saveBankState(); updateCoverageBadge();
+  }
+
+  function updateCoverageBadge() {
+    if (!$('qbCoverageBadge')) return;
+    const selected = selectedTopicsFromForm();
+    $('qbCoverageBadge').textContent = selected.length ? `${selected.length} 個主題` : '尚未選擇';
+  }
+
+  function selectAllCurrentGrade() {
+    const checks = [...document.querySelectorAll('#qbTopicChecks input')];
+    const allChecked = checks.every((input) => input.checked);
+    checks.forEach((input) => { input.checked = !allChecked; });
+    saveSettingsFromForm();
+  }
+
+  function generateQuestions(settings) {
+    const topics = settings.topics.filter((id) => GENERATORS[id]);
+    if (!topics.length) throw new Error('請至少選擇一個主題。');
+    const count = settings.count;
+    const questions = [];
+    for (let index = 0; index < count; index += 1) {
+      const topicId = topics[index % topics.length];
+      const difficulty = settings.difficulty === 'mixed' ? ((index % 3) + 1) : Number(settings.difficulty);
+      questions.push(GENERATORS[topicId](difficulty));
+    }
+    return shuffle(questions);
+  }
+
+  function startSession() {
+    saveSettingsFromForm();
+    try {
+      const questions = generateQuestions(bankState.settings);
+      bankState.current = {
+        id: uid('paper'),
+        createdAt: new Date().toISOString(),
+        startedAt: Date.now(),
+        mode: bankState.settings.mode,
+        durationSeconds: bankState.settings.mode === 'exam' ? bankState.settings.minutes * 60 : 0,
+        questions,
+        index: 0,
+        responses: [],
+        completed: false,
+        savedToTraining: false
+      };
+      selectedOption = null;
+      saveBankState();
+      showSession();
+      startTimer();
+    } catch (error) { window.alert(error.message); }
+  }
+
+  function showSession() {
+    $('qbEmpty').classList.add('qb-hidden');
+    $('qbSummary').classList.remove('active');
+    $('qbSession').classList.add('active');
+    renderQuestion(); renderLiveStats();
+  }
+
+  function restoreSession() {
+    const session = bankState.current;
+    if (!session) return;
+    if (session.completed) { renderSummary(session); return; }
+    showSession(); startTimer();
+  }
+
+  function currentQuestion() { return bankState.current?.questions[bankState.current.index] || null; }
+
+  function renderQuestion() {
+    const session = bankState.current, q = currentQuestion();
+    if (!session || !q) return finishSession();
+    selectedOption = null;
+    $('qbSessionLabel').textContent = session.mode === 'exam' ? '限時測驗進行中' : '練習模式 · 作答後立即解析';
+    $('qbQuestionProgress').textContent = `第 ${session.index + 1} 題／共 ${session.questions.length} 題`;
+    $('qbProgressFill').style.width = `${session.index / session.questions.length * 100}%`;
+    $('qbQuestionMeta').innerHTML = `<span>${q.grade} 年級</span><span>${escapeHtml(q.topic)}</span><span>${['','基礎','標準','進階'][q.difficulty]}</span><span>${escapeHtml(q.domain)}</span>`;
+    $('qbPrompt').textContent = q.prompt;
+    $('qbOptions').innerHTML = q.options.map((option, index) => `<button class="qb-option" type="button" data-qb-option="${index}"><span class="qb-option-key">${LETTERS[index]}</span><span>${escapeHtml(option)}</span></button>`).join('');
+    $('qbFeedback').className = 'qb-feedback'; $('qbFeedbackTitle').textContent = ''; $('qbFeedbackText').textContent = '';
+    $('qbSubmitButton').classList.remove('qb-hidden'); $('qbNextButton').classList.add('qb-hidden'); $('qbSkipButton').disabled = false;
+    document.querySelectorAll('[data-qb-option]').forEach((button) => button.addEventListener('click', () => selectOption(Number(button.dataset.qbOption))));
+    renderLiveStats();
+  }
+
+  function selectOption(index) {
+    if ($('qbSubmitButton').classList.contains('qb-hidden')) return;
+    selectedOption = index;
+    document.querySelectorAll('[data-qb-option]').forEach((button) => button.classList.toggle('selected', Number(button.dataset.qbOption) === index));
+  }
+
+  function submitAnswer(skipped = false) {
+    const session = bankState.current, q = currentQuestion();
+    if (!session || !q) return;
+    if (!skipped && selectedOption == null) return window.alert('請先選擇一個答案。');
+    const existing = session.responses.find((response) => response.questionId === q.id);
+    if (existing) return;
+    const answeredAt = Date.now();
+    const previousTime = session.responses.length ? session.responses[session.responses.length - 1].answeredAt : session.startedAt;
+    const response = { questionId: q.id, topicId: q.topicId, selectedIndex: skipped ? null : selectedOption, correct: !skipped && selectedOption === q.answerIndex, skipped, seconds: Math.max(1, Math.round((answeredAt - previousTime) / 1000)), answeredAt };
+    session.responses.push(response); saveBankState();
+    document.querySelectorAll('[data-qb-option]').forEach((button) => {
+      const index = Number(button.dataset.qbOption);
+      button.disabled = true;
+      if (index === q.answerIndex) button.classList.add('correct');
+      else if (index === selectedOption && !response.correct) button.classList.add('wrong');
+    });
+    $('qbSubmitButton').classList.add('qb-hidden'); $('qbNextButton').classList.remove('qb-hidden'); $('qbSkipButton').disabled = true;
+    if (session.mode === 'practice') {
+      $('qbFeedback').className = `qb-feedback show ${response.correct ? 'good' : 'bad'}`;
+      $('qbFeedbackTitle').textContent = response.correct ? '答對了' : skipped ? `已略過，正確答案是 ${q.answerText}` : `正確答案是 ${q.answerText}`;
+      $('qbFeedbackText').textContent = q.explanation;
+    } else {
+      $('qbFeedback').className = 'qb-feedback show';
+      $('qbFeedbackTitle').textContent = skipped ? '本題已略過' : '答案已記錄';
