@@ -46,6 +46,7 @@ jobs:
           test -f _site/index.html
           test -f _site/portal/index.html
           test -f _site/schedule-studio/index.html
+          test -f _site/self-training-checklist/index.html
           test -f _site/appointment-generator/index.html
           test -f _site/build-info.json
 
@@ -58,6 +59,7 @@ jobs:
             echo '- Main app: `/Lifeline/`'
             echo '- Project portal: `/Lifeline/portal/`'
             echo '- Schedule Studio: `/Lifeline/schedule-studio/`'
+            echo '- Self-training checklist: `/Lifeline/self-training-checklist/`'
             echo '- Appointment Generator: `/Lifeline/appointment-generator/`'
             echo '- Commit: `${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"
