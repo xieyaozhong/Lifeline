@@ -1,0 +1,164 @@
+(() => {
+  'use strict';
+
+  const BANK_STORAGE_KEY = 'lifeline-junior-math-bank-v1';
+  const TRAINING_STORAGE_KEY = 'lifeline-self-training-checklist-v1';
+  const LETTERS = ['A', 'B', 'C', 'D'];
+  const $ = (id) => document.getElementById(id);
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const pad = (value) => String(value).padStart(2, '0');
+  const dateKey = (date = new Date()) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const formatSeconds = (seconds) => `${pad(Math.floor(Math.max(0, seconds) / 60))}:${pad(Math.max(0, seconds) % 60)}`;
+  const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const pick = (items) => items[randInt(0, items.length - 1)];
+  const shuffle = (items) => [...items].sort(() => Math.random() - 0.5);
+  const gcd = (a, b) => { let x = Math.abs(a); let y = Math.abs(b); while (y) [x, y] = [y, x % y]; return x; };
+  const lcm = (a, b) => Math.abs(a * b) / gcd(a, b);
+  const round = (value, digits = 2) => Number(value.toFixed(digits));
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+
+  const TOPICS = [
+    { id: 'g7-integers', grade: '7', name: '正負數與整數運算', domain: '數與量', code: '7-N' },
+    { id: 'g7-gcdlcm', grade: '7', name: '質因數、最大公因數與最小公倍數', domain: '數與量', code: '7-N' },
+    { id: 'g7-exponents', grade: '7', name: '指數律與科學記號', domain: '數與量', code: '7-N' },
+    { id: 'g7-linear-equation', grade: '7', name: '一元一次方程式', domain: '代數', code: '7-A' },
+    { id: 'g7-proportion', grade: '7', name: '比、比例與正比', domain: '代數', code: '7-A' },
+    { id: 'g8-polynomial', grade: '8', name: '多項式運算', domain: '代數', code: '8-A' },
+    { id: 'g8-radical', grade: '8', name: '平方根與根式', domain: '數與量', code: '8-N' },
+    { id: 'g8-pythagorean', grade: '8', name: '畢氏定理', domain: '空間與形狀', code: '8-S' },
+    { id: 'g8-factorization', grade: '8', name: '乘法公式與因式分解', domain: '代數', code: '8-A' },
+    { id: 'g8-quadratic-equation', grade: '8', name: '一元二次方程式', domain: '代數', code: '8-A' },
+    { id: 'g9-similarity', grade: '9', name: '相似形與比例線段', domain: '空間與形狀', code: '9-S' },
+    { id: 'g9-quadratic-function', grade: '9', name: '二次函數', domain: '關係', code: '9-F' },
+    { id: 'g9-circle', grade: '9', name: '圓、圓周角與弧', domain: '空間與形狀', code: '9-S' },
+    { id: 'g9-probability', grade: '9', name: '機率', domain: '資料與不確定性', code: '9-D' },
+    { id: 'g9-statistics', grade: '9', name: '統計與資料分析', domain: '資料與不確定性', code: '9-D' }
+  ];
+
+  function uniqueChoices(correct, distractors, formatter = String) {
+    const correctText = formatter(correct);
+    const seen = new Set([correctText]);
+    const pool = [];
+    distractors.map(formatter).forEach((item) => {
+      if (!seen.has(item)) { seen.add(item); pool.push(item); }
+    });
+    const numeric = Number(correct);
+    let offset = 1;
+    const generic = ['0', '1', '-1', '無法判斷', '以上皆非'];
+    while (pool.length < 3) {
+      const candidate = Number.isFinite(numeric) ? formatter(numeric + offset) : generic[(offset - 1) % generic.length];
+      offset += 1;
+      if (!seen.has(candidate)) { seen.add(candidate); pool.push(candidate); }
+    }
+    const options = shuffle([correctText, ...pool.slice(0, 3)]);
+    return { options, answerIndex: options.indexOf(correctText), answerText: correctText };
+  }
+
+  function question(topicId, difficulty, prompt, correct, distractors, explanation, formatter = String) {
+    const topic = TOPICS.find((item) => item.id === topicId);
+    const choices = uniqueChoices(correct, distractors, formatter);
+    return { id: uid('q'), topicId, topic: topic.name, grade: topic.grade, domain: topic.domain, code: topic.code, difficulty, prompt, explanation, ...choices };
+  }
+
+  const GENERATORS = {
+    'g7-integers': (d) => {
+      if (d === 1) {
+        const a = randInt(3, 18), b = randInt(2, 15), correct = -a + b;
+        return question('g7-integers', d, `計算：(-${a}) + ${b} = ?`, correct, [a + b, -(a + b), a - b], `從 -${a} 往正方向移動 ${b} 格，因此答案是 ${correct}。`);
+      }
+      if (d === 2) {
+        const a = randInt(5, 20), b = randInt(3, 16), c = randInt(2, 10), correct = a - (-b) - c;
+        return question('g7-integers', d, `計算：${a} - (-${b}) - ${c} = ?`, correct, [a - b - c, a + b + c, -(a + b - c)], `減去負數等於加上正數，所以 ${a}+${b}-${c}=${correct}。`);
+      }
+      const a = randInt(2, 9), b = randInt(2, 9), c = randInt(3, 18), correct = (-a) * b + c;
+      return question('g7-integers', d, `計算：(-${a}) × ${b} + ${c} = ?`, correct, [a * b + c, -(a * b + c), a * b - c], `先乘除後加減：(-${a})×${b}=-${a * b}，再加 ${c} 得 ${correct}。`);
+    },
+    'g7-gcdlcm': (d) => {
+      const base = randInt(2, 7), m = randInt(2, 7), n = randInt(2, 8), a = base * m, b = base * n;
+      if (d === 1) {
+        const correct = gcd(a, b);
+        return question('g7-gcdlcm', d, `${a} 與 ${b} 的最大公因數是多少？`, correct, [base, Math.min(a, b), lcm(a, b)], `將兩數分解或用輾轉相除法，可得最大公因數為 ${correct}。`);
+      }
+      if (d === 2) {
+        const correct = lcm(a, b);
+        return question('g7-gcdlcm', d, `${a} 與 ${b} 的最小公倍數是多少？`, correct, [a * b, gcd(a, b), correct + base], `最小公倍數 = ${a}×${b}÷最大公因數 ${gcd(a, b)} = ${correct}。`);
+      }
+      const x = pick([6, 8, 10, 12]), y = pick([9, 12, 15, 18]), correct = lcm(x, y);
+      return question('g7-gcdlcm', d, `甲燈每 ${x} 秒閃一次，乙燈每 ${y} 秒閃一次，現在同時閃，至少幾秒後再次同時閃？`, correct, [gcd(x, y), x + y, x * y], `再次同時發生的時間是 ${x} 與 ${y} 的最小公倍數，因此為 ${correct} 秒。`);
+    },
+    'g7-exponents': (d) => {
+      const a = randInt(2, 6), m = randInt(2, 5), n = randInt(2, 5);
+      if (d === 1) {
+        const correct = m + n;
+        return question('g7-exponents', d, `${a}^${m} × ${a}^${n} 可以化成 ${a} 的幾次方？`, correct, [m * n, Math.abs(m - n), m + n + 1], `同底數相乘，指數相加：${a}^${m + n}。`);
+      }
+      if (d === 2) {
+        const k = randInt(1, Math.min(4, m * n - 1)), correct = m * n - k;
+        return question('g7-exponents', d, `(${a}^${m})^${n} ÷ ${a}^${k} 可以化成 ${a} 的幾次方？`, correct, [m + n - k, m * (n - k), m * n + k], `冪的冪指數相乘，再用同底數相除指數相減：${m}×${n}-${k}=${correct}。`);
+      }
+      const coefficient = randInt(12, 98) / 10, power = randInt(3, 6), correct = coefficient * (10 ** power);
+      return question('g7-exponents', d, `${coefficient} × 10^${power} 寫成一般數字是多少？`, correct, [coefficient * 10 ** (power - 1), coefficient * 10 ** (power + 1), power * 10 ** coefficient], `小數點向右移 ${power} 位，得到 ${correct}。`, (v) => Number(v).toLocaleString('zh-TW'));
+    },
+    'g7-linear-equation': (d) => {
+      const x = randInt(-8, 12);
+      if (d === 1) {
+        const a = randInt(2, 12), b = x + a;
+        return question('g7-linear-equation', d, `若 x + ${a} = ${b}，則 x = ?`, x, [b + a, a - b, -x], `等式兩邊同減 ${a}，得 x=${b}-${a}=${x}。`);
+      }
+      if (d === 2) {
+        const a = randInt(2, 7), b = randInt(-8, 8), c = a * x + b;
+        return question('g7-linear-equation', d, `解方程式：${a}x ${b >= 0 ? '+' : '-'} ${Math.abs(b)} = ${c}`, x, [x + 1, -x, c - b], `先移項得 ${a}x=${c - b}，再除以 ${a}，所以 x=${x}。`);
+      }
+      let a = randInt(2, 7), c = randInt(1, 6); if (a === c) c += 1;
+      const b = randInt(-9, 9), e = (a - c) * x + b;
+      return question('g7-linear-equation', d, `解方程式：${a}x ${b >= 0 ? '+' : '-'} ${Math.abs(b)} = ${c}x ${e >= 0 ? '+' : '-'} ${Math.abs(e)}`, x, [x + 2, -x, a - c], `把 x 項移到同一邊、常數移到另一邊，可得 (${a}-${c})x=${e - b}，所以 x=${x}。`);
+    },
+    'g7-proportion': (d) => {
+      if (d === 1) {
+        const a = randInt(2, 8), b = randInt(2, 9), correct = a * b;
+        return question('g7-proportion', d, `若 x:${a} = ${b}:${1}，則 x = ?`, correct, [a + b, Math.abs(a - b), correct + a], `x/${a}=${b}，所以 x=${a}×${b}=${a * b}。`);
+      }
+      if (d === 2) {
+        const scale = pick([100, 200, 500]), cm = randInt(3, 12), correct = cm * scale / 100;
+        return question('g7-proportion', d, `地圖比例尺為 1:${scale}，圖上距離 ${cm} 公分，實際距離是多少公尺？`, correct, [cm * scale, cm / scale, correct * 10], `實際為 ${cm}×${scale}=${cm * scale} 公分，也就是 ${correct} 公尺。`, (v) => `${v} 公尺`);
+      }
+      const people = randInt(3, 8), items = people * randInt(2, 6), newPeople = randInt(people + 1, people + 6), correct = items / people * newPeople;
+      return question('g7-proportion', d, `${people} 人需要 ${items} 份材料，若每人用量相同，${newPeople} 人需要幾份？`, correct, [items + newPeople, items / newPeople, correct - people], `每人需要 ${items / people} 份，因此 ${newPeople} 人需要 ${correct} 份。`);
+    },
+    'g8-polynomial': (d) => {
+      if (d === 1) {
+        const a = randInt(2, 8), b = randInt(2, 8), c = randInt(-8, 8), correct = a + b;
+        return question('g8-polynomial', d, `化簡：${a}x + ${b}x ${c >= 0 ? '+' : '-'} ${Math.abs(c)}，x 的係數是多少？`, correct, [a * b, Math.abs(a - b), correct + c], `同類項係數相加，${a}x+${b}x=${correct}x。`);
+      }
+      if (d === 2) {
+        const a = randInt(2, 6), b = randInt(2, 8), c = randInt(1, 7), correct = a * b;
+        return question('g8-polynomial', d, `展開 ${a}x(${b}x + ${c}) 後，x² 的係數是多少？`, correct, [a + b, a * c, b * c], `分配律：${a}x×${b}x=${a * b}x²。`);
+      }
+      const x = randInt(-4, 5), a = randInt(1, 4), b = randInt(-6, 6), c = randInt(-8, 8), correct = a * x * x + b * x + c;
+      return question('g8-polynomial', d, `當 x=${x} 時，${a}x² ${b >= 0 ? '+' : '-'} ${Math.abs(b)}x ${c >= 0 ? '+' : '-'} ${Math.abs(c)} 的值為何？`, correct, [a * x + b + c, -correct, correct + x], `代入 x=${x}：${a}×${x}²${b >= 0 ? '+' : ''}${b}×${x}${c >= 0 ? '+' : ''}${c}=${correct}。`);
+    },
+    'g8-radical': (d) => {
+      if (d === 1) {
+        const root = randInt(3, 15), correct = root;
+        return question('g8-radical', d, `√${root * root} = ?`, correct, [-root, root * root, root + 1], `平方根取非負主值，因為 ${root}²=${root * root}，所以答案是 ${root}。`);
+      }
+      if (d === 2) {
+        const outside = randInt(2, 7), inside = pick([2, 3, 5, 6, 7]), radicand = outside * outside * inside;
+        const correct = `${outside}√${inside}`;
+        return question('g8-radical', d, `將 √${radicand} 化為最簡根式。`, correct, [`${outside * inside}√${outside}`, `${outside}√${inside * inside}`, `${inside}√${outside}`], `${radicand}=${outside * outside}×${inside}，所以 √${radicand}=${outside}√${inside}。`);
+      }
+      const k = pick([2, 3, 5, 7]), a = randInt(2, 7), b = randInt(1, 6), correct = `${a + b}√${k}`;
+      return question('g8-radical', d, `化簡：${a}√${k} + ${b}√${k}`, correct, [`${a * b}√${k}`, `${a + b}√${k * 2}`, `${Math.abs(a - b)}√${k}`], `同類根式可合併係數：(${a}+${b})√${k}=${correct}。`);
+    },
+    'g8-pythagorean': (d) => {
+      const triples = [[3,4,5],[5,12,13],[8,15,17],[7,24,25]];
+      const [a0,b0,c0] = pick(triples), scale = d === 1 ? 1 : randInt(1, 3), a = a0 * scale, b = b0 * scale, c = c0 * scale;
+      if (d === 1) return question('g8-pythagorean', d, `直角三角形兩股長為 ${a}、${b}，斜邊長為何？`, c, [a + b, Math.abs(a - b), a * b], `${a}²+${b}²=${c * c}，因此斜邊為 ${c}。`);
+      if (d === 2) return question('g8-pythagorean', d, `直角三角形斜邊為 ${c}，其中一股為 ${a}，另一股為何？`, b, [c - a, c + a, a], `另一股²=${c}²-${a}²=${b * b}，所以另一股為 ${b}。`);
+      const x1 = randInt(-3, 3), y1 = randInt(-3, 3), dx = a0, dy = b0;
+      return question('g8-pythagorean', d, `平面上 A(${x1},${y1})、B(${x1 + dx},${y1 + dy})，AB 長為何？`, c0, [a0 + b0, Math.abs(a0 - b0), a0 * b0], `水平差 ${dx}、垂直差 ${dy}，距離為 √(${dx}²+${dy}²)=${c0}。`);
+    },
+    'g8-factorization': (d) => {
+      if (d === 1) {
+        const a = randInt(2, 7), b = randInt(2, 8), c = randInt(2, 8);
