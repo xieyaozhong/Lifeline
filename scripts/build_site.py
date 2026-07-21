@@ -65,6 +65,25 @@ def inject_project_shell() -> None:
         html_path.write_text(content, encoding="utf-8")
 
 
+def inject_schedule_extensions() -> None:
+    html_path = OUTPUT / "schedule-studio" / "index.html"
+    required = [
+        OUTPUT / "schedule-studio" / "date-export-loader.js",
+        OUTPUT / "schedule-studio" / "date-export.css",
+        *[OUTPUT / "schedule-studio" / f"date-export.{index:02d}.part" for index in range(1, 5)],
+    ]
+    for path in required:
+        if not path.exists():
+            raise FileNotFoundError(f"Required schedule extension missing: {path.relative_to(OUTPUT)}")
+    content = html_path.read_text(encoding="utf-8")
+    if "date-export-loader.js" not in content:
+        content = content.replace(
+            "</body>",
+            '  <script src="date-export-loader.js"></script>\n</body>',
+        )
+        html_path.write_text(content, encoding="utf-8")
+
+
 def write_build_info() -> None:
     info = {
         "sha": os.getenv("GITHUB_SHA", "local-build"),
@@ -86,6 +105,7 @@ def write_build_info() -> None:
 def main() -> None:
     copy_site()
     inject_project_shell()
+    inject_schedule_extensions()
     write_build_info()
     print(f"Built Lifeline site at {OUTPUT}")
 
