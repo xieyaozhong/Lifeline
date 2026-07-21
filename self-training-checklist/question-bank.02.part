@@ -1,0 +1,164 @@
+        return question('g8-factorization', d, `${a * b}x² + ${a * c}x 的共同因式為何？`, `${a}x`, [`${a}`, `${b}x`, `${a * b}x`], `兩項都含有 ${a} 與 x，因此可提出共同因式 ${a}x。`);
+      }
+      const p = randInt(1, 8), q = randInt(1, 8), sum = p + q, product = p * q;
+      if (d === 2) return question('g8-factorization', d, `x² + ${sum}x + ${product} 的因式分解為何？`, `(x+${p})(x+${q})`, [`(x+${sum})(x+${product})`, `(x-${p})(x-${q})`, `(x+${product})(x+1)`], `找兩數和為 ${sum}、積為 ${product}，即 ${p} 與 ${q}。`);
+      const a = randInt(2, 9), b = randInt(1, a - 1);
+      return question('g8-factorization', d, `x² - ${a * a} 的因式分解為何？`, `(x-${a})(x+${a})`, [`(x-${a})²`, `(x+${a})²`, `(x-${b})(x+${b})`], `利用平方差公式 x²-a²=(x-a)(x+a)。`);
+    },
+    'g8-quadratic-equation': (d) => {
+      if (d === 1) {
+        const a = randInt(2, 10), correct = `x=±${a}`;
+        return question('g8-quadratic-equation', d, `解方程式：x²=${a * a}`, correct, [`x=${a}`, `x=-${a}`, `x=±${a * a}`], `平方為 ${a * a} 的數有 ${a} 與 -${a}，所以 x=±${a}。`);
+      }
+      const r1 = randInt(-7, -1), r2 = randInt(1, 8), b = -(r1 + r2), c = r1 * r2, correct = `x=${r1} 或 ${r2}`;
+      if (d === 2) return question('g8-quadratic-equation', d, `解方程式：x² ${b >= 0 ? '+' : '-'} ${Math.abs(b)}x ${c >= 0 ? '+' : '-'} ${Math.abs(c)}=0`, correct, [`x=${-r1} 或 ${-r2}`, `x=${b} 或 ${c}`, `x=${r1 + r2}`], `因式分解為 (x-${r1})(x-${r2})=0，所以根為 ${r1}、${r2}。`);
+      const a = randInt(2, 4), root = randInt(1, 6), c2 = -a * root * root;
+      return question('g8-quadratic-equation', d, `解方程式：${a}x² ${c2 >= 0 ? '+' : '-'} ${Math.abs(c2)}=0`, `x=±${root}`, [`x=${root}`, `x=±${a * root}`, `x=±${root * root}`], `移項後 ${a}x²=${-c2}，所以 x²=${root * root}，得 x=±${root}。`);
+    },
+    'g9-similarity': (d) => {
+      const scale = randInt(2, 5), small = randInt(3, 10), large = small * scale;
+      if (d === 1) return question('g9-similarity', d, `兩相似圖形的對應邊長為 ${small} 與 ${large}，大圖對小圖的相似比為何？`, `${scale}:1`, [`1:${scale}`, `${large}:${small + 1}`, `${scale * scale}:1`], `相似比為對應邊長比 ${large}:${small}=${scale}:1。`);
+      if (d === 2) {
+        const otherSmall = randInt(4, 12), correct = otherSmall * scale;
+        return question('g9-similarity', d, `兩三角形相似，相似比（大：小）為 ${scale}:1。小三角形某邊長 ${otherSmall}，大三角形對應邊長為何？`, correct, [otherSmall + scale, otherSmall * scale * scale, otherSmall / scale], `對應邊乘相似比：${otherSmall}×${scale}=${correct}。`);
+      }
+      const correct = scale * scale;
+      return question('g9-similarity', d, `兩相似圖形的邊長比為 ${scale}:1，面積比為何？`, `${correct}:1`, [`${scale}:1`, `${scale * 2}:1`, `${scale ** 3}:1`], `面積比是邊長比的平方，所以為 ${scale}²:1=${correct}:1。`);
+    },
+    'g9-quadratic-function': (d) => {
+      if (d === 1) {
+        const a = pick([-3,-2,-1,1,2,3]), x = randInt(-4,4), correct = a*x*x;
+        return question('g9-quadratic-function', d, `函數 y=${a}x²，當 x=${x} 時，y = ?`, correct, [a*x, -correct, correct + a], `代入得 y=${a}×${x}²=${correct}。`);
+      }
+      if (d === 2) {
+        const h = randInt(-5,5), k = randInt(-5,5);
+        return question('g9-quadratic-function', d, `拋物線 y=(x${h >= 0 ? '-' : '+'}${Math.abs(h)})² ${k >= 0 ? '+' : '-'} ${Math.abs(k)} 的頂點為何？`, `(${h},${k})`, [`(${-h},${k})`, `(${h},${-k})`, `(${-h},${-k})`], `頂點式 y=(x-h)²+k 的頂點是 (h,k)。`);
+      }
+      const a = pick([-3,-2,-1,1,2,3]), h = randInt(-3,3), k = randInt(-4,4), direction = a > 0 ? '向上' : '向下';
+      return question('g9-quadratic-function', d, `函數 y=${a}(x${h >= 0 ? '-' : '+'}${Math.abs(h)})² ${k >= 0 ? '+' : '-'} ${Math.abs(k)} 的開口方向與頂點為何？`, `${direction}，頂點(${h},${k})`, [`${direction === '向上' ? '向下' : '向上'}，頂點(${h},${k})`, `${direction}，頂點(${-h},${k})`, `${direction}，頂點(${h},${-k})`], `a=${a} 決定開口${direction}；頂點式顯示頂點為 (${h},${k})。`);
+    },
+    'g9-circle': (d) => {
+      if (d === 1) {
+        const angle = randInt(2, 12) * 15;
+        return question('g9-circle', d, `圓心角為 ${angle}°，它所對的弧度數為何？`, `${angle}°`, [`${angle/2}°`, `${180-angle}°`, `${angle*2}°`], `圓心角度數等於所對弧的度數。`);
+      }
+      if (d === 2) {
+        const arc = randInt(4, 12) * 20, correct = arc / 2;
+        return question('g9-circle', d, `一個圓周角所對的弧為 ${arc}°，此圓周角為何？`, `${correct}°`, [`${arc}°`, `${arc*2}°`, `${180-correct}°`], `圓周角等於所對弧度數的一半，所以為 ${correct}°。`);
+      }
+      const radius = randInt(3, 12), angle = pick([60,90,120,180]), correct = round(2 * radius * Math.PI * angle / 360, 1);
+      return question('g9-circle', d, `半徑 ${radius} 的圓中，圓心角 ${angle}° 所對弧長約為多少？（π取 3.14）`, round(2 * radius * 3.14 * angle / 360, 1), [round(radius * 3.14 * angle / 360,1), round(2 * radius * 3.14,1), round(radius * radius * 3.14 * angle / 360,1)], `弧長=2πr×${angle}/360，代入 π=3.14 得約 ${round(2 * radius * 3.14 * angle / 360, 1)}。`);
+    },
+    'g9-probability': (d) => {
+      if (d === 1) {
+        const favorable = randInt(1, 3);
+        return question('g9-probability', d, `擲一顆公平六面骰，點數不大於 ${favorable} 的機率為何？`, `${favorable}/6`, [`1/${favorable}`, `${6-favorable}/6`, `${favorable}/5`], `有 ${favorable} 個符合結果，總共有 6 個等可能結果，所以機率為 ${favorable}/6。`);
+      }
+      if (d === 2) return question('g9-probability', d, '同時擲兩枚公平硬幣，恰好出現一個正面的機率為何？', '1/2', ['1/4','3/4','1/3'], '四種等可能結果為正正、正反、反正、反反，其中兩種恰好一正面，所以 2/4=1/2。');
+      const red = randInt(2,6), blue = randInt(2,6), total = red+blue;
+      const correct = `${red}/${total} × ${red-1}/${total-1}`;
+      const simplifiedNumerator = red*(red-1), simplifiedDenominator=total*(total-1), g=gcd(simplifiedNumerator,simplifiedDenominator);
+      return question('g9-probability', d, `袋中有 ${red} 顆紅球、${blue} 顆藍球，不放回連抽兩球，兩球皆紅的機率為何？`, `${simplifiedNumerator/g}/${simplifiedDenominator/g}`, [`${red}/${total}`, `${red}/${total} × ${red}/${total}`, `${blue}/${total} × ${blue-1}/${total-1}`], `第一次紅球機率 ${red}/${total}，第二次剩 ${red-1} 顆紅球、共 ${total-1} 顆，相乘並約分得 ${simplifiedNumerator/g}/${simplifiedDenominator/g}。`);
+    },
+    'g9-statistics': (d) => {
+      const values = Array.from({length: d === 1 ? 4 : 5}, () => randInt(2, 15));
+      if (d === 1) {
+        const total = values.reduce((a,b)=>a+b,0), correct = round(total/values.length,2);
+        return question('g9-statistics', d, `資料 ${values.join('、')} 的平均數是多少？`, correct, [total, round(total/(values.length-1),2), Math.max(...values)-Math.min(...values)], `總和 ${total} 除以 ${values.length}，平均數為 ${correct}。`);
+      }
+      if (d === 2) {
+        const sorted=[...values].sort((a,b)=>a-b), correct=sorted[Math.floor(sorted.length/2)];
+        return question('g9-statistics', d, `資料 ${values.join('、')} 的中位數是多少？`, correct, [values[0], Math.max(...values), round(values.reduce((a,b)=>a+b,0)/values.length,1)], `排序後為 ${sorted.join('、')}，中央位置的數是 ${correct}。`);
+      }
+      const scores=[60,70,80,90], counts=scores.map(()=>randInt(1,5)), totalCount=counts.reduce((a,b)=>a+b,0), sum=scores.reduce((s,v,i)=>s+v*counts[i],0), correct=round(sum/totalCount,1);
+      return question('g9-statistics', d, `某次成績 60、70、80、90 分的人數依序為 ${counts.join('、')} 人，平均成績為何？`, correct, [round(scores.reduce((a,b)=>a+b,0)/4,1), round(sum/(totalCount-1),1), totalCount], `加權總分 ${sum}，總人數 ${totalCount}，平均為 ${sum}÷${totalCount}=${correct}。`);
+    }
+  };
+
+  function defaultBankState() {
+    return { settings: { grade: 'all', difficulty: 'mixed', count: 10, mode: 'practice', minutes: 20, topics: TOPICS.map((topic) => topic.id) }, history: [], current: null };
+  }
+
+  function loadBankState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(BANK_STORAGE_KEY));
+      return saved ? { ...defaultBankState(), ...saved, settings: { ...defaultBankState().settings, ...(saved.settings || {}) }, history: Array.isArray(saved.history) ? saved.history : [] } : defaultBankState();
+    } catch { return defaultBankState(); }
+  }
+
+  let bankState = loadBankState();
+  let selectedOption = null;
+  let timerId = null;
+  let remainingSeconds = 0;
+
+  function saveBankState() { localStorage.setItem(BANK_STORAGE_KEY, JSON.stringify(bankState)); }
+
+  function injectUi() {
+    const tabs = document.querySelector('.view-tabs');
+    const main = document.querySelector('main');
+    if (!tabs || !main || $('bankView')) return;
+    const tab = document.createElement('button');
+    tab.className = 'view-tab'; tab.type = 'button'; tab.dataset.view = 'bank'; tab.textContent = '國中數學題庫';
+    tabs.appendChild(tab);
+    const section = document.createElement('section');
+    section.className = 'view-panel'; section.id = 'bankView';
+    section.innerHTML = `
+      <div class="qb-shell">
+        <section class="qb-hero">
+          <article class="qb-intro panel">
+            <p class="eyebrow">JUNIOR HIGH MATH BANK</p>
+            <h2>內建國中數學題庫</h2>
+            <p>依七、八、九年級與主題即時產生原創題目，練習完成後自動寫入自主訓練紀錄，讓回課分析直接看見弱點與下次合理題量。</p>
+            <div class="qb-feature-pills"><span>15 個核心主題</span><span>三段難度</span><span>練習／測驗模式</span><span>錯題解析</span><span>自動回寫分析</span></div>
+          </article>
+          <aside class="qb-quick-stats panel">
+            <div class="qb-stat"><span>內建主題</span><strong>${TOPICS.length}</strong></div>
+            <div class="qb-stat"><span>可生成題目</span><strong>∞</strong></div>
+            <div class="qb-stat"><span>累積作答</span><strong id="qbLifetimeQuestions">0</strong></div>
+            <div class="qb-stat"><span>近期正確率</span><strong id="qbLifetimeAccuracy">—</strong></div>
+          </aside>
+        </section>
+        <div class="qb-layout">
+          <aside class="qb-settings panel">
+            <div class="qb-panel-heading"><div><p class="eyebrow">PAPER SETTINGS</p><h2>組卷設定</h2></div><span class="qb-badge" id="qbCoverageBadge">全範圍</span></div>
+            <div class="qb-form">
+              <label><span>年級</span><select id="qbGrade"><option value="all">七～九年級</option><option value="7">七年級</option><option value="8">八年級</option><option value="9">九年級</option></select></label>
+              <label><span>難度</span><select id="qbDifficulty"><option value="mixed">混合難度</option><option value="1">基礎</option><option value="2">標準</option><option value="3">進階</option></select></label>
+              <label><span>題數</span><input id="qbCount" type="number" min="5" max="40" step="5" value="10" /></label>
+              <label><span>模式</span><select id="qbMode"><option value="practice">練習模式</option><option value="exam">限時測驗</option></select></label>
+              <label class="wide"><span>測驗時間（分鐘）</span><input id="qbMinutes" type="number" min="5" max="120" step="5" value="20" /></label>
+              <label class="wide"><span>選擇主題</span><div class="qb-topic-checks" id="qbTopicChecks"></div></label>
+            </div>
+            <div class="qb-actions"><button class="primary-button" id="qbGenerateButton" type="button">產生訓練卷</button><button class="soft-button" id="qbSelectAllButton" type="button">全選目前年級</button><button class="soft-button" id="qbApplyPlanButton" type="button">套用題量到今日計畫</button></div>
+            <div class="qb-rule-note">題目由本機規則即時生成，不連線抓取考卷；每次數字與選項都會改變。完成後會依主題分組寫入自核紀錄。</div>
+          </aside>
+          <section class="qb-workspace panel">
+            <div class="qb-empty" id="qbEmpty"><div><div class="qb-empty-icon">∑</div><h3>先選範圍，再產生訓練卷</h3><p>建議第一次選單一年級、2～3 個主題與 10 題。完成後，系統會顯示每個主題的完成率、正確率與錯題解析。</p></div></div>
+            <div class="qb-session" id="qbSession">
+              <div class="qb-session-top"><div class="qb-progress-copy"><span id="qbSessionLabel">練習進行中</span><strong id="qbQuestionProgress">第 1 題／共 10 題</strong></div><div class="qb-timer"><span>剩餘時間</span><strong id="qbTimer">不限時</strong></div></div>
+              <div class="qb-progress-track"><span id="qbProgressFill"></span></div>
+              <article class="qb-question-card"><div class="qb-question-meta" id="qbQuestionMeta"></div><h3 class="qb-prompt" id="qbPrompt"></h3><div class="qb-options" id="qbOptions"></div><div class="qb-feedback" id="qbFeedback"><strong id="qbFeedbackTitle"></strong><p id="qbFeedbackText"></p></div><div class="qb-question-actions"><button class="ghost-button" id="qbQuitButton" type="button">結束本次</button><div><button class="soft-button" id="qbSkipButton" type="button">略過</button><button class="primary-button" id="qbSubmitButton" type="button">確認答案</button><button class="primary-button qb-hidden" id="qbNextButton" type="button">下一題</button></div></div></article>
+            </div>
+            <div class="qb-summary" id="qbSummary"><div id="qbSummaryContent"></div></div>
+          </section>
+          <aside class="qb-side panel">
+            <section class="qb-side-section"><div class="qb-panel-heading"><div><p class="eyebrow">LIVE SESSION</p><h3>本次狀態</h3></div></div><div class="qb-live-list" id="qbLiveStats"></div></section>
+            <section class="qb-side-section"><div class="qb-panel-heading"><div><p class="eyebrow">COVERAGE</p><h3>題庫覆蓋</h3></div></div><div class="qb-coverage" id="qbCoverage"></div></section>
+            <section class="qb-side-section"><div class="qb-panel-heading"><div><p class="eyebrow">RECENT PAPERS</p><h3>最近練習</h3></div></div><div class="qb-history-list" id="qbHistory"></div></section>
+          </aside>
+        </div>
+      </div>`;
+    main.appendChild(section);
+
+    tab.addEventListener('click', () => switchToBank());
+    if (readTrainingState()?.activeView === 'bank') switchToBank(false);
+    bindBankEvents();
+    populateSettings();
+    renderTopicChecks();
+    renderCoverage();
+    renderHistory();
+    renderLifetimeStats();
+    restoreSession();
+  }
+
+  function readTrainingState() {
