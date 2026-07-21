@@ -1,0 +1,100 @@
+    utility.innerHTML = `
+      <div class="schedule-date-picker-wrap">
+        <label for="scheduleDatePicker"><span>指定日期</span><input id="scheduleDatePicker" type="date" value="${selectedKey}" /></label>
+        <button class="schedule-date-shortcut" id="jumpTodayButton" type="button">今天</button>
+        <button class="schedule-date-shortcut" id="jumpTomorrowButton" type="button">明天</button>
+        <button class="schedule-date-shortcut" id="jumpNextCourseButton" type="button">下個有課日</button>
+      </div>
+      <div class="schedule-date-chip-list" id="scheduleDateChipList" aria-label="未來七天快速日期"></div>`;
+    toolbar.insertAdjacentElement('afterend', utility);
+
+    const exportButton = document.createElement('button');
+    exportButton.className = 'schedule-export-button';
+    exportButton.id = 'exportSelectedDayButton';
+    exportButton.type = 'button';
+    exportButton.innerHTML = '<span aria-hidden="true">⇩</span> 一鍵輸出行程';
+    actions.prepend(exportButton);
+
+    const picker = $('scheduleDatePicker');
+    picker.addEventListener('change', () => picker.value && goToDate(picker.value));
+    $('jumpTodayButton').addEventListener('click', () => goToDate(dateKey(new Date())));
+    $('jumpTomorrowButton').addEventListener('click', () => goToDate(dateKey(addDays(new Date(), 1))));
+    $('jumpNextCourseButton').addEventListener('click', () => {
+      const key = nextScheduledDate();
+      if (key) goToDate(key);
+      else showToast('目前沒有更晚的已排課日期。');
+    });
+    exportButton.addEventListener('click', exportSelectedDay);
+
+    titleButton.title = '點擊選擇指定日期';
+    titleButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (typeof picker.showPicker === 'function') picker.showPicker();
+      else picker.focus();
+    }, true);
+
+    renderDateChips($('scheduleDateChipList'), selectedKey);
+  }
+
+  function roundedRect(context, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.arcTo(x + width, y, x + width, y + height, r);
+    context.arcTo(x + width, y + height, x, y + height, r);
+    context.arcTo(x, y + height, x, y, r);
+    context.arcTo(x, y, x + width, y, r);
+    context.closePath();
+  }
+
+  function fitText(context, text, maxWidth, startSize, minSize = 24, weight = 700) {
+    let size = startSize;
+    do {
+      context.font = `${weight} ${size}px "Noto Sans TC", "PingFang TC", system-ui, sans-serif`;
+      if (context.measureText(text).width <= maxWidth) return size;
+      size -= 2;
+    } while (size >= minSize);
+    return minSize;
+  }
+
+  function itineraryData() {
+    const state = readState();
+    if (!state) return null;
+    const key = state.selectedDate || dateKey(new Date());
+    const courses = new Map(state.courses.map((course) => [course.id, course]));
+    const sessions = state.sessions
+      .filter((session) => session.date === key)
+      .sort((a, b) => a.start - b.start)
+      .map((session) => {
+        const course = courses.get(session.courseId) || {};
+        return {
+          ...session,
+          name: course.name || '未命名行程',
+          teacher: course.teacher || course.category || '自主安排',
+          category: course.category || '其他',
+          room: session.room || course.room || '',
+          color: course.color || '#82d5ca'
+        };
+      });
+    return { key, sessions };
+  }
+
+  async function canvasBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('canvas export failed')), 'image/png', 0.95);
+    });
+  }
+
+  function drawItinerary(data) {
+    const width = 1080;
+    const headerHeight = 350;
+    const rowHeight = 142;
+    const footerHeight = 120;
+    const height = Math.max(1280, headerHeight + Math.max(1, data.sessions.length) * rowHeight + footerHeight);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+
+    const background = context.createLinearGradient(0, 0, width, height);
