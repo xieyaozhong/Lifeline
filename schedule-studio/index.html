@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#081422" />
+  <meta name="description" content="拖曳課程卡，自動生成圓形與傳統課表。" />
+  <title>時序環｜圓形課表工作室</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <div class="brand-wrap">
+      <a class="back-link" href="../" aria-label="返回 Lifeline">← Lifeline</a>
+      <div class="brand-mark" aria-hidden="true"><span></span></div>
+      <div>
+        <p class="eyebrow">SCHEDULE STUDIO</p>
+        <h1>時序環</h1>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="live-clock" aria-live="polite">
+        <span id="liveDate">—</span>
+        <strong id="liveTime">--:--:--</strong>
+      </div>
+      <button class="ghost-button" id="resetButton" type="button">重設示範</button>
+      <button class="primary-button" id="addCourseButton" type="button">＋ 新增課程</button>
+    </div>
+  </header>
+
+  <nav class="view-tabs" aria-label="課表檢視方式">
+    <button class="view-tab active" type="button" data-view="orbit">圓形課表</button>
+    <button class="view-tab" type="button" data-view="grid">傳統課表</button>
+  </nav>
+
+  <main>
+    <section class="view-panel active" id="orbitView">
+      <div class="studio-grid">
+        <aside class="course-library panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">COURSE CARDS</p>
+              <h2>課程卡庫</h2>
+            </div>
+            <span class="count-badge" id="courseCount">0</span>
+          </div>
+
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="courseSearch" type="search" placeholder="搜尋課程、老師或標籤" autocomplete="off" />
+          </label>
+
+          <div class="course-list" id="courseList"></div>
+
+          <div class="library-tip">
+            <span class="tip-icon">↗</span>
+            <p>拖曳課程卡到中央圓環，系統會依偏好時段與空檔自動安排。</p>
+          </div>
+        </aside>
+
+        <section class="orbit-workspace panel">
+          <div class="workspace-toolbar">
+            <div class="date-navigation">
+              <button class="icon-button" id="previousDayButton" type="button" aria-label="前一天">‹</button>
+              <div>
+                <p class="eyebrow">SELECTED DAY</p>
+                <button class="date-title" id="selectedDateButton" type="button">—</button>
+              </div>
+              <button class="icon-button" id="nextDayButton" type="button" aria-label="後一天">›</button>
+            </div>
+
+            <div class="toolbar-actions">
+              <button class="soft-button" id="clearDayButton" type="button">清空本日</button>
+              <button class="accent-button" id="autoPlanButton" type="button">自動排滿三天</button>
+            </div>
+          </div>
+
+          <div class="orbit-stage" id="orbitDropZone" tabindex="0" aria-label="拖曳課程到此處自動排課">
+            <div class="drop-halo" aria-hidden="true"></div>
+            <svg id="mainOrbit" class="main-orbit" viewBox="0 0 540 540" role="img" aria-label="選定日期的圓形課表"></svg>
+            <div class="orbit-center">
+              <p class="center-label" id="centerStatus">目前課程</p>
+              <strong id="currentCourseName">自由時間</strong>
+              <span id="currentCourseTime">等待下一堂課</span>
+              <div class="center-progress"><span id="currentCourseProgress"></span></div>
+            </div>
+            <div class="drop-instruction" id="dropInstruction">把課程卡丟進圓環</div>
+          </div>
+
+          <div class="day-orbits" id="dayOrbitList" aria-label="連續三天課程總覽"></div>
+        </section>
+
+        <aside class="overview-panel panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">LIVE OVERVIEW</p>
+              <h2>課程總覽</h2>
+            </div>
+            <span class="live-dot">LIVE</span>
+          </div>
+
+          <section class="now-card">
+            <p>現在進行</p>
+            <h3 id="overviewCurrentName">自由時間</h3>
+            <div class="now-meta">
+              <span id="overviewCurrentTime">—</span>
+              <span id="overviewCurrentTeacher">—</span>
+            </div>
+          </section>
+
+          <section class="summary-strip">
+            <div><span>三日課程</span><strong id="threeDayCount">0</strong></div>
+            <div><span>總時數</span><strong id="threeDayHours">0h</strong></div>
+            <div><span>空檔率</span><strong id="freeRatio">100%</strong></div>
+          </section>
+
+          <div class="agenda-heading">
+            <h3>本日時間線</h3>
+            <span id="selectedDayTotal">0 堂</span>
+          </div>
+          <div class="agenda-list" id="agendaList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view-panel" id="gridView">
+      <div class="grid-page panel">
+        <div class="grid-page-heading">
+          <div>
+            <p class="eyebrow">TRADITIONAL TIMETABLE</p>
+            <h2>傳統課表</h2>
+            <p>與圓形課表共用同一份資料，拖曳排課後會即時同步。</p>
+          </div>
+          <div class="grid-actions">
+            <button class="soft-button" id="exportButton" type="button">匯出 JSON</button>
+            <button class="accent-button" id="printButton" type="button">列印課表</button>
+          </div>
+        </div>
+
+        <div class="traditional-table-wrap">
+          <div class="traditional-table" id="traditionalTable"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="courseDialog" class="course-dialog">
+    <form method="dialog" id="courseForm">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">COURSE EDITOR</p>
+          <h2 id="dialogTitle">新增課程</h2>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+      </div>
+
+      <input id="courseId" type="hidden" />
+      <div class="form-grid">
+        <label class="wide">課程名稱<input id="courseName" required maxlength="30" placeholder="例如：高等數學研究" /></label>
+        <label>老師／主持人<input id="courseTeacher" maxlength="24" placeholder="例如：自學" /></label>
+        <label>分類<select id="courseCategory"><option>主修</option><option>技能</option><option>健康</option><option>創作</option><option>語言</option><option>其他</option></select></label>
+        <label>每堂時長（分鐘）<input id="courseDuration" type="number" min="15" max="360" step="15" value="60" required /></label>
+        <label>優先度<select id="coursePriority"><option value="3">核心</option><option value="2" selected>重要</option><option value="1">彈性</option></select></label>
+        <label>偏好開始時間<input id="coursePreferredStart" type="time" value="09:00" /></label>
+        <label>偏好結束時間<input id="coursePreferredEnd" type="time" value="20:00" /></label>
+        <label class="color-field">識別色<input id="courseColor" type="color" value="#d9b66f" /></label>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="danger-button hidden" id="deleteCourseButton" type="button">刪除課程</button>
+        <span></span>
+        <button class="ghost-button" value="cancel" type="button" id="cancelDialogButton">取消</button>
+        <button class="primary-button" value="default" type="submit">儲存課程</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
