@@ -22,9 +22,13 @@ jobs:
           set -euo pipefail
           cat app-v2.*.part > /tmp/lifeline-v2.js
           node --check /tmp/lifeline-v2.js
+          cat self-training-checklist/question-bank.*.part > /tmp/junior-math-bank.js
+          node --check /tmp/junior-math-bank.js
           find . -type f -name '*.js' -not -path './.git/*' -print0 | xargs -0 -n1 node --check
           python scripts/validate_site.py
           python scripts/build_site.py
           test -s _site/build-info.json
           test -f _site/404.html
           test -f _site/self-training-checklist/index.html
+          test -f _site/self-training-checklist/question-bank-loader.js
+          test -f _site/self-training-checklist/question-bank.04.part
