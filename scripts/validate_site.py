@@ -61,6 +61,9 @@ def main() -> int:
         ROOT / "shared/project-shell.js",
         ROOT / "portal/index.html",
         ROOT / "schedule-studio/index.html",
+        ROOT / "schedule-studio/date-export.css",
+        ROOT / "schedule-studio/date-export-loader.js",
+        *[ROOT / "schedule-studio" / f"date-export.{index:02d}.part" for index in range(1, 5)],
         ROOT / "appointment-generator/index.html",
         ROOT / "self-training-checklist/index.html",
     ]
