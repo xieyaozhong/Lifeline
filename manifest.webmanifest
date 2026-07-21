@@ -1,13 +1,45 @@
 {
-  "name": "生命線 Lifeline",
+  "name": "生命線 Lifeline Suite",
   "short_name": "生命線",
-  "description": "把每日任務、能力成長與生命價值連結起來。",
+  "description": "整合任務、生命價值、課程安排與 LINE 預約工具。",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#07111f",
   "theme_color": "#07111f",
   "lang": "zh-Hant",
+  "categories": ["productivity", "education", "utilities"],
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "生命線",
+      "short_name": "生命線",
+      "description": "開啟任務與生命價值系統",
+      "url": "./",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "專案中心",
+      "short_name": "工具中心",
+      "description": "查看所有 Lifeline 工具",
+      "url": "./portal/",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "時序環",
+      "short_name": "課表",
+      "description": "開啟圓形課表工作室",
+      "url": "./schedule-studio/",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "約定產生器",
+      "short_name": "預約 QR",
+      "description": "建立 LINE 預約 QR Code",
+      "url": "./appointment-generator/",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
   ]
 }
