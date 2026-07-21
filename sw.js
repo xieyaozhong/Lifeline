@@ -1,4 +1,4 @@
-const CACHE = 'lifeline-cache-v3';
+const CACHE = 'lifeline-suite-cache-v4';
 const BASE = new URL('./', self.location.href);
 const ASSETS = [
   './',
@@ -15,41 +15,81 @@ const ASSETS = [
   './app-v2.06.part',
   './app-v2.07.part',
   './manifest.webmanifest',
-  './icon.svg'
-].map(path => new URL(path, BASE).toString());
+  './icon.svg',
+  './shared/project-shell.css',
+  './shared/project-shell.js',
+  './portal/',
+  './portal/index.html',
+  './portal/style.css',
+  './portal/app.js',
+  './schedule-studio/',
+  './schedule-studio/index.html',
+  './schedule-studio/style.css',
+  './schedule-studio/app.js',
+  './schedule-studio/child-day.css',
+  './schedule-studio/child-day.js',
+  './appointment-generator/',
+  './appointment-generator/index.html',
+  './appointment-generator/style.css',
+  './appointment-generator/app.js',
+  './404.html'
+].map((path) => new URL(path, BASE).toString());
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE)
-      .then(cache => cache.addAll(ASSETS))
+      .then((cache) => cache.addAll(ASSETS))
       .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', event => {
+function offlineFallback(requestUrl) {
+  const path = new URL(requestUrl).pathname;
+  if (path.includes('/appointment-generator/')) return new URL('./appointment-generator/index.html', BASE).toString();
+  if (path.includes('/schedule-studio/')) return new URL('./schedule-studio/index.html', BASE).toString();
+  if (path.includes('/portal/')) return new URL('./portal/index.html', BASE).toString();
+  return new URL('./index.html', BASE).toString();
+}
+
+self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-
-      return fetch(event.request)
-        .then(response => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
           if (response.ok && new URL(event.request.url).origin === self.location.origin) {
             const copy = response.clone();
-            caches.open(CACHE).then(cache => cache.put(event.request, copy));
+            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
           }
           return response;
         })
-        .catch(() => caches.match(new URL('./index.html', BASE).toString()));
+        .catch(async () => (
+          await caches.match(event.request)
+          || await caches.match(offlineFallback(event.request.url))
+        ))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      });
     })
   );
 });
