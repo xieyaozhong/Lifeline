@@ -1,0 +1,90 @@
+    background.addColorStop(0, '#071522');
+    background.addColorStop(0.55, '#0b1e30');
+    background.addColorStop(1, '#07111d');
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
+
+    const glow = context.createRadialGradient(760, 80, 0, 760, 80, 620);
+    glow.addColorStop(0, 'rgba(75, 155, 170, .22)');
+    glow.addColorStop(1, 'rgba(75, 155, 170, 0)');
+    context.fillStyle = glow;
+    context.fillRect(0, 0, width, 720);
+
+    context.fillStyle = '#e7ca86';
+    context.font = '800 24px system-ui, sans-serif';
+    context.fillText('SCHEDULE STUDIO · DAILY ITINERARY', 72, 76);
+    context.fillStyle = '#f5f0e5';
+    context.font = '800 62px "Noto Sans TC", "PingFang TC", system-ui, sans-serif';
+    context.fillText('時序環｜行程課表', 72, 154);
+    context.fillStyle = '#9aabba';
+    context.font = '500 31px "Noto Sans TC", "PingFang TC", system-ui, sans-serif';
+    context.fillText(formatLongDate(data.key), 72, 211);
+
+    const totalMinutes = data.sessions.reduce((sum, session) => sum + session.end - session.start, 0);
+    const first = data.sessions[0];
+    const last = data.sessions[data.sessions.length - 1];
+    const summary = [
+      `${data.sessions.length} 個行程`,
+      `總計 ${(totalMinutes / 60).toFixed(totalMinutes % 60 ? 1 : 0)} 小時`,
+      first && last ? `${minutesToTime(first.start)}–${minutesToTime(last.end)}` : '今日無排程'
+    ];
+    let chipX = 72;
+    summary.forEach((label) => {
+      context.font = '700 23px "Noto Sans TC", system-ui, sans-serif';
+      const chipWidth = context.measureText(label).width + 42;
+      roundedRect(context, chipX, 257, chipWidth, 52, 18);
+      context.fillStyle = 'rgba(231, 202, 134, .09)';
+      context.fill();
+      context.strokeStyle = 'rgba(231, 202, 134, .22)';
+      context.stroke();
+      context.fillStyle = '#e7ca86';
+      context.fillText(label, chipX + 21, 291);
+      chipX += chipWidth + 14;
+    });
+
+    let y = headerHeight;
+    if (!data.sessions.length) {
+      roundedRect(context, 72, y, width - 144, 260, 28);
+      context.fillStyle = 'rgba(255,255,255,.035)';
+      context.fill();
+      context.strokeStyle = 'rgba(255,255,255,.09)';
+      context.stroke();
+      context.fillStyle = '#f5f0e5';
+      context.font = '700 38px "Noto Sans TC", system-ui, sans-serif';
+      context.fillText('這一天尚未安排課程或行程', 130, y + 105);
+      context.fillStyle = '#9aabba';
+      context.font = '500 25px "Noto Sans TC", system-ui, sans-serif';
+      context.fillText('可回到時序環拖曳課程卡，或使用自動排程功能。', 130, y + 160);
+    } else {
+      data.sessions.forEach((session, index) => {
+        const cardY = y + index * rowHeight;
+        roundedRect(context, 72, cardY, width - 144, 118, 24);
+        context.fillStyle = 'rgba(255,255,255,.038)';
+        context.fill();
+        context.strokeStyle = 'rgba(255,255,255,.085)';
+        context.stroke();
+
+        roundedRect(context, 72, cardY, 10, 118, 5);
+        context.fillStyle = session.color;
+        context.fill();
+
+        context.fillStyle = '#e7ca86';
+        context.font = '800 28px system-ui, sans-serif';
+        context.fillText(minutesToTime(session.start), 108, cardY + 46);
+        context.fillStyle = '#8397ab';
+        context.font = '600 21px system-ui, sans-serif';
+        context.fillText(minutesToTime(session.end), 108, cardY + 82);
+
+        const nameX = 260;
+        fitText(context, session.name, 480, 34, 25, 800);
+        context.fillStyle = '#f5f0e5';
+        context.fillText(session.name, nameX, cardY + 48);
+        const detail = [session.teacher, session.room ? `教室：${session.room}` : '', session.category].filter(Boolean).join(' · ');
+        fitText(context, detail, 590, 22, 17, 500);
+        context.fillStyle = '#9aabba';
+        context.fillText(detail, nameX, cardY + 84);
+
+        const duration = `${session.end - session.start} 分鐘`;
+        context.font = '700 20px "Noto Sans TC", system-ui, sans-serif';
+        const badgeWidth = context.measureText(duration).width + 30;
+        roundedRect(context, width - 72 - badgeWidth - 24, cardY + 34, badgeWidth, 46, 16);
