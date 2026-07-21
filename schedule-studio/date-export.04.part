@@ -1,0 +1,74 @@
+        context.fillStyle = 'rgba(130,213,202,.08)';
+        context.fill();
+        context.fillStyle = '#82d5ca';
+        context.fillText(duration, width - 72 - badgeWidth - 9, cardY + 64);
+      });
+    }
+
+    context.fillStyle = '#71869a';
+    context.font = '500 20px "Noto Sans TC", system-ui, sans-serif';
+    context.fillText('由 Lifeline · 時序環產生', 72, height - 58);
+    context.textAlign = 'right';
+    context.fillText(`輸出時間 ${new Intl.DateTimeFormat('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())}`, width - 72, height - 58);
+    context.textAlign = 'left';
+    return canvas;
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function exportSelectedDay() {
+    const button = $('exportSelectedDayButton');
+    const data = itineraryData();
+    if (!data || !button) return showToast('無法讀取目前課表資料。');
+    const original = button.innerHTML;
+    button.disabled = true;
+    button.textContent = '正在產生行程圖…';
+    try {
+      if (document.fonts?.ready) await document.fonts.ready;
+      const canvas = drawItinerary(data);
+      const blob = await canvasBlob(canvas);
+      const filename = `時序環-${data.key}-行程課表.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: `${formatLongDate(data.key)} 行程課表`,
+            text: `時序環行程課表，共 ${data.sessions.length} 個行程。`,
+            files: [file]
+          });
+          showToast('行程課表已開啟分享選單。');
+        } catch (error) {
+          if (error?.name !== 'AbortError') {
+            downloadBlob(blob, filename);
+            showToast('分享功能無法使用，已改為下載 PNG。');
+          }
+        }
+      } else {
+        downloadBlob(blob, filename);
+        showToast('行程課表 PNG 已輸出。');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('行程課表輸出失敗，請重新整理後再試。');
+    } finally {
+      button.disabled = false;
+      button.innerHTML = original;
+    }
+  }
+
+  function init() {
+    injectDateTools();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
+})();
