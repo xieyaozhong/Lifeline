@@ -7,6 +7,7 @@
   <meta name="description" content="拖曳課程卡，自動生成圓形與傳統課表。" />
   <title>時序環｜圓形課表工作室</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="child-day.css" />
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -75,6 +76,7 @@
 
             <div class="toolbar-actions">
               <button class="soft-button" id="clearDayButton" type="button">清空本日</button>
+              <button class="primary-button child-day-button" id="childDayButton" type="button">兒童全天課程</button>
               <button class="accent-button" id="autoPlanButton" type="button">自動排滿三天</button>
             </div>
           </div>
@@ -179,8 +181,78 @@
     </form>
   </dialog>
 
+  <dialog id="childDayDialog" class="course-dialog child-day-dialog">
+    <form method="dialog" id="childDayForm" class="child-day-form">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">CHILD FULL-DAY PLANNER</p>
+          <h2>一鍵產生兒童全天課程</h2>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="關閉">×</button>
+      </div>
+
+      <div class="child-day-intro">
+        <section class="child-day-inputs">
+          <div class="child-day-date-card">
+            <span>套用日期</span>
+            <strong id="childSelectedDate">目前選定日期</strong>
+          </div>
+
+          <div class="form-grid">
+            <label>小朋友年紀
+              <input id="childAge" type="number" min="3" max="12" value="6" required />
+            </label>
+            <label>活動場域
+              <select id="childVenue" required>
+                <option value="kindergarten">幼兒園／安親班</option>
+                <option value="learningCenter">補習班／學習中心</option>
+                <option value="school" selected>學校／校園</option>
+                <option value="camp">營隊／戶外教育</option>
+                <option value="home">居家共學</option>
+                <option value="community">社區活動中心</option>
+              </select>
+            </label>
+          </div>
+
+          <span class="child-age-hint" id="childAgeHint">6 歲 · 國小低年級節奏</span>
+          <p class="child-rationale" id="childRationale"></p>
+
+          <div class="child-rule-grid">
+            <div><span>單次專注</span><strong id="childRuleFocus">—</strong></div>
+            <div><span>休息安排</span><strong id="childRuleBreaks">—</strong></div>
+            <div><span>午間恢復</span><strong id="childRuleRest">—</strong></div>
+            <div><span>動態活動</span><strong id="childRuleActivity">—</strong></div>
+          </div>
+
+          <div class="child-safety-note">
+            <strong>排程原則</strong>
+            <span>09:00–17:00 完整覆蓋，包含午餐、喝水、如廁、護眼、轉換與收拾時間；實際帶班仍應依孩子身體狀況彈性調整。</span>
+          </div>
+        </section>
+
+        <section class="child-day-preview">
+          <div class="child-preview-heading">
+            <div>
+              <h3>全天課程預覽</h3>
+              <p>教室會依場域與活動類型自動指派。</p>
+            </div>
+            <div class="child-room-preview" id="childRoomPreview"></div>
+          </div>
+          <div class="child-timeline-preview" id="childTimelinePreview"></div>
+        </section>
+      </div>
+
+      <div class="dialog-actions">
+        <span></span>
+        <button class="ghost-button" value="cancel" type="button" id="cancelChildDayButton">取消</button>
+        <button class="primary-button" value="default" type="submit">產生 09:00–17:00 課表</button>
+      </div>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js"></script>
+  <script src="child-day.js"></script>
 </body>
 </html>
