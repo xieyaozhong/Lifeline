@@ -130,13 +130,25 @@
     const training = readTrainingState();
     if (!training) return window.alert('無法讀取自主訓練資料。');
     const names = bankState.settings.topics.map((id)=>TOPICS.find((topic)=>topic.id===id)?.name).filter(Boolean);
+    const topicText = names.length === 1 ? names[0] : `國中數學：${names.slice(0,3).join('、')}${names.length>3?'…':''}`;
+    const sessionQuestions = Math.max(5, Math.ceil(bankState.settings.count / 2));
     training.settings = training.settings || {};
-    training.settings.topic = names.length === 1 ? names[0] : `國中數學：${names.slice(0,3).join('、')}${names.length>3?'…':''}`;
+    training.settings.topic = topicText;
     training.settings.dailyQuestions = bankState.settings.count;
-    training.settings.sessionQuestions = Math.max(5, Math.ceil(bankState.settings.count / 2));
+    training.settings.sessionQuestions = sessionQuestions;
     training.activeView = 'plan';
     writeTrainingState(training);
-    window.alert(`已把 ${bankState.settings.count} 題與所選主題套用到今日計畫設定。切回「今日計畫」即可產生時間表。`);
+    if ($('trainingTopic')) $('trainingTopic').value = topicText;
+    if ($('dailyQuestions')) {
+      $('dailyQuestions').value = bankState.settings.count;
+      $('dailyQuestions').dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if ($('sessionQuestions')) {
+      $('sessionQuestions').value = sessionQuestions;
+      $('sessionQuestions').dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    document.querySelector('.view-tab[data-view="plan"]')?.click();
+    window.alert(`已把 ${bankState.settings.count} 題與所選主題套用到今日計畫，可直接產生時間表。`);
   }
 
   function bindBankEvents() {
