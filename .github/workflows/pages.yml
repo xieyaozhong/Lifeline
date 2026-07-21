@@ -35,6 +35,8 @@ jobs:
           set -euo pipefail
           cat app-v2.*.part > /tmp/lifeline-v2.js
           node --check /tmp/lifeline-v2.js
+          cat self-training-checklist/question-bank.*.part > /tmp/junior-math-bank.js
+          node --check /tmp/junior-math-bank.js
           find . -type f -name '*.js' -not -path './.git/*' -print0 | xargs -0 -n1 node --check
           python scripts/validate_site.py
 
@@ -47,6 +49,9 @@ jobs:
           test -f _site/portal/index.html
           test -f _site/schedule-studio/index.html
           test -f _site/self-training-checklist/index.html
+          test -f _site/self-training-checklist/question-bank.css
+          test -f _site/self-training-checklist/question-bank-loader.js
+          test -f _site/self-training-checklist/question-bank.04.part
           test -f _site/appointment-generator/index.html
           test -f _site/build-info.json
 
@@ -59,7 +64,7 @@ jobs:
             echo '- Main app: `/Lifeline/`'
             echo '- Project portal: `/Lifeline/portal/`'
             echo '- Schedule Studio: `/Lifeline/schedule-studio/`'
-            echo '- Self-training checklist: `/Lifeline/self-training-checklist/`'
+            echo '- Self-training checklist + math bank: `/Lifeline/self-training-checklist/`'
             echo '- Appointment Generator: `/Lifeline/appointment-generator/`'
             echo '- Commit: `${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"
