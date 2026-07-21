@@ -1,0 +1,161 @@
+      $('qbFeedbackText').textContent = '測驗模式會在完成後統一顯示答案與解析。';
+    }
+    renderLiveStats();
+  }
+
+  function nextQuestion() {
+    const session = bankState.current;
+    if (!session) return;
+    if (!session.responses.find((response) => response.questionId === currentQuestion()?.id)) return;
+    session.index += 1; saveBankState();
+    if (session.index >= session.questions.length) finishSession(); else renderQuestion();
+  }
+
+  function finishSession() {
+    const session = bankState.current;
+    if (!session || session.completed) { if (session) renderSummary(session); return; }
+    clearInterval(timerId); timerId = null;
+    const answeredIds = new Set(session.responses.map((response) => response.questionId));
+    session.questions.filter((q) => !answeredIds.has(q.id)).forEach((q) => session.responses.push({ questionId: q.id, topicId: q.topicId, selectedIndex: null, correct: false, skipped: true, seconds: 0, answeredAt: Date.now() }));
+    session.completed = true; session.completedAt = new Date().toISOString();
+    const stats = sessionStats(session);
+    bankState.history.unshift({ id: session.id, date: dateKey(), completedAt: session.completedAt, count: session.questions.length, correct: stats.correct, accuracy: stats.accuracy, seconds: stats.seconds, topics: [...new Set(session.questions.map((q) => q.topic))] });
+    bankState.history = bankState.history.slice(0, 20);
+    saveSessionToTraining(session);
+    saveBankState();
+    renderSummary(session); renderHistory(); renderLifetimeStats();
+  }
+
+  function sessionStats(session) {
+    const correct = session.responses.filter((response) => response.correct).length;
+    const seconds = session.responses.reduce((sum, response) => sum + Number(response.seconds || 0), 0);
+    return { correct, total: session.questions.length, accuracy: session.questions.length ? correct / session.questions.length : 0, seconds, pace: session.questions.length ? seconds / session.questions.length : 0 };
+  }
+
+  function topicBreakdown(session) {
+    const groups = new Map();
+    session.questions.forEach((q) => {
+      if (!groups.has(q.topicId)) groups.set(q.topicId, { topicId: q.topicId, topic: q.topic, grade: q.grade, total: 0, correct: 0, seconds: 0, difficulty: 0, wrong: [] });
+      const group = groups.get(q.topicId), response = session.responses.find((r) => r.questionId === q.id);
+      group.total += 1; group.correct += response?.correct ? 1 : 0; group.seconds += response?.seconds || 0; group.difficulty += q.difficulty;
+      if (!response?.correct) group.wrong.push({ q, response });
+    });
+    return [...groups.values()].map((group) => ({ ...group, accuracy: group.correct / group.total, averageDifficulty: group.difficulty / group.total })).sort((a,b)=>a.accuracy-b.accuracy);
+  }
+
+  function saveSessionToTraining(session) {
+    if (session.savedToTraining) return;
+    const training = readTrainingState();
+    if (!training) return;
+    training.records = Array.isArray(training.records) ? training.records : [];
+    const breakdown = topicBreakdown(session);
+    breakdown.forEach((group) => {
+      const reason = group.accuracy < .6 ? 'concept' : group.accuracy < .8 ? 'method' : 'none';
+      training.records.push({ id: uid('record'), date: dateKey(), blockId: `${session.id}_${group.topicId}`, topic: group.topic, target: group.total, attempted: group.total, correct: group.correct, actualMinutes: Math.max(1, Math.round(group.seconds / 60)), reviewMinutes: group.wrong.length ? Math.max(5, group.wrong.length * 3) : 0, difficulty: round(group.averageDifficulty, 1), reason, note: `內建題庫練習；${group.correct}/${group.total} 題答對`, skipped: false, source: 'junior-math-bank', paperId: session.id, updatedAt: new Date().toISOString() });
+    });
+    training.adjustments = Array.isArray(training.adjustments) ? training.adjustments : [];
+    training.adjustments.unshift({ id: uid('adjust'), date: dateKey(), at: new Date().toISOString(), message: `完成國中數學題庫 ${session.questions.length} 題，已依主題寫入回課分析。` });
+    writeTrainingState(training);
+    session.savedToTraining = true;
+  }
+
+  function renderSummary(session) {
+    clearInterval(timerId); timerId = null;
+    $('qbEmpty').classList.add('qb-hidden'); $('qbSession').classList.remove('active'); $('qbSummary').classList.add('active');
+    const stats = sessionStats(session), breakdown = topicBreakdown(session), wrong = breakdown.flatMap((group) => group.wrong), weakest = breakdown[0];
+    $('qbSummaryContent').innerHTML = `
+      <div class="qb-summary-hero"><div class="qb-score-ring" style="--score:${Math.round(stats.accuracy*100)}%"><strong>${Math.round(stats.accuracy*100)}%</strong><span>正確率</span></div><div class="qb-summary-copy"><p class="eyebrow">PAPER COMPLETE</p><h3>${stats.accuracy >= .85 ? '表現穩定，可以逐步加深' : stats.accuracy >= .65 ? '已完成，先修補錯題再增加題量' : '建議降低題量並回到核心概念'}</h3><p>${weakest ? `目前最需要優先處理的是「${escapeHtml(weakest.topic)}」，本次正確率 ${Math.round(weakest.accuracy*100)}%。` : ''} 結果已依主題寫入回課分析。</p><div class="qb-summary-metrics"><div><span>答對</span><strong>${stats.correct}/${stats.total}</strong></div><div><span>總耗時</span><strong>${Math.max(1,Math.round(stats.seconds/60))}m</strong></div><div><span>每題平均</span><strong>${stats.pace.toFixed(1)}s</strong></div><div><span>錯題</span><strong>${wrong.length}</strong></div></div></div></div>
+      <div class="qb-breakdown"><div class="qb-panel-heading"><div><p class="eyebrow">TOPIC RESULT</p><h3>主題表現</h3></div></div><div class="qb-breakdown-row header"><span>主題</span><span>答對</span><span>正確率</span><span>判讀</span></div>${breakdown.map((group)=>`<div class="qb-breakdown-row"><strong>${escapeHtml(group.topic)}</strong><span>${group.correct}/${group.total}</span><span>${Math.round(group.accuracy*100)}%</span><span class="qb-risk ${group.accuracy>=.8?'good':''}">${group.accuracy>=.8?'穩定':group.accuracy<.6?'先補概念':'檢討方法'}</span></div>`).join('')}</div>
+      <div class="qb-breakdown"><div class="qb-panel-heading"><div><p class="eyebrow">WRONG ANSWERS</p><h3>錯題解析</h3></div><span class="qb-badge">${wrong.length} 題</span></div><div class="qb-wrong-list">${wrong.length ? wrong.map(({q,response})=>`<article class="qb-wrong-card"><strong>${escapeHtml(q.prompt)}</strong><span>你的答案：${response?.selectedIndex == null ? '略過' : escapeHtml(q.options[response.selectedIndex])}　｜　正確答案：${escapeHtml(q.answerText)}</span><span>${escapeHtml(q.explanation)}</span></article>`).join('') : '<div class="empty-state">本次全部答對。</div>'}</div></div>
+      <div class="qb-summary-actions"><button class="primary-button" id="qbRetryWeakButton" type="button">再練弱點</button><button class="soft-button" id="qbNewPaperButton" type="button">重新組卷</button><button class="soft-button" id="qbPrintPaperButton" type="button">列印結果</button></div>`;
+    $('qbRetryWeakButton').addEventListener('click', () => retryWeak(breakdown));
+    $('qbNewPaperButton').addEventListener('click', resetWorkspace);
+    $('qbPrintPaperButton').addEventListener('click', () => window.print());
+    renderLiveStats();
+  }
+
+  function retryWeak(breakdown) {
+    const weakIds = breakdown.filter((group) => group.accuracy < .8).map((group) => group.topicId);
+    bankState.settings.topics = weakIds.length ? weakIds : [breakdown[0]?.topicId].filter(Boolean);
+    bankState.settings.count = Math.max(5, Math.min(15, bankState.settings.topics.length * 5));
+    bankState.settings.mode = 'practice'; saveBankState(); populateSettings(); renderTopicChecks(); startSession();
+  }
+
+  function resetWorkspace() {
+    clearInterval(timerId); timerId = null; bankState.current = null; saveBankState();
+    $('qbSummary').classList.remove('active'); $('qbSession').classList.remove('active'); $('qbEmpty').classList.remove('qb-hidden'); renderLiveStats();
+  }
+
+  function startTimer() {
+    clearInterval(timerId); timerId = null;
+    const session = bankState.current;
+    if (!session || session.completed || session.mode !== 'exam') { if ($('qbTimer')) $('qbTimer').textContent = '不限時'; return; }
+    const elapsed = Math.floor((Date.now() - session.startedAt) / 1000);
+    remainingSeconds = Math.max(0, session.durationSeconds - elapsed);
+    $('qbTimer').textContent = formatSeconds(remainingSeconds);
+    timerId = setInterval(() => {
+      remainingSeconds -= 1; $('qbTimer').textContent = formatSeconds(remainingSeconds);
+      if (remainingSeconds <= 0) { clearInterval(timerId); timerId = null; finishSession(); }
+    }, 1000);
+  }
+
+  function renderLiveStats() {
+    if (!$('qbLiveStats')) return;
+    const session = bankState.current;
+    if (!session) { $('qbLiveStats').innerHTML = '<div class="qb-live-item"><span>目前狀態</span><strong>尚未開始</strong></div>'; return; }
+    const stats = sessionStats(session), answered = session.responses.length;
+    $('qbLiveStats').innerHTML = `<div class="qb-live-item"><span>已作答</span><strong>${answered}/${session.questions.length}</strong></div><div class="qb-live-item"><span>目前答對</span><strong>${stats.correct} 題</strong></div><div class="qb-live-item"><span>即時正確率</span><strong>${answered ? Math.round(stats.correct/answered*100)+'%' : '—'}</strong></div>`;
+  }
+
+  function renderCoverage() {
+    if (!$('qbCoverage')) return;
+    ['7','8','9'].forEach(()=>{});
+    $('qbCoverage').innerHTML = ['7','8','9'].map((grade) => { const count = TOPICS.filter((topic)=>topic.grade===grade).length; return `<div class="qb-coverage-row"><span>${grade} 年級</span><div class="qb-coverage-track"><i style="width:${count/5*100}%"></i></div><strong>${count}</strong></div>`; }).join('');
+  }
+
+  function renderHistory() {
+    if (!$('qbHistory')) return;
+    $('qbHistory').innerHTML = bankState.history.length ? bankState.history.slice(0,6).map((item)=>`<article class="qb-history-item"><span>${new Intl.DateTimeFormat('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(item.completedAt))}</span><strong>${item.correct}/${item.count} · ${Math.round(item.accuracy*100)}%</strong><small>${escapeHtml(item.topics.slice(0,2).join('、'))}${item.topics.length>2?'…':''}</small></article>`).join('') : '<div class="qb-live-item"><span>最近練習</span><strong>尚無紀錄</strong></div>';
+  }
+
+  function renderLifetimeStats() {
+    if (!$('qbLifetimeQuestions')) return;
+    const total = bankState.history.reduce((sum,item)=>sum+item.count,0), correct = bankState.history.reduce((sum,item)=>sum+item.correct,0);
+    $('qbLifetimeQuestions').textContent = total;
+    $('qbLifetimeAccuracy').textContent = total ? `${Math.round(correct/total*100)}%` : '—';
+  }
+
+  function applyToTodayPlan() {
+    saveSettingsFromForm();
+    const training = readTrainingState();
+    if (!training) return window.alert('無法讀取自主訓練資料。');
+    const names = bankState.settings.topics.map((id)=>TOPICS.find((topic)=>topic.id===id)?.name).filter(Boolean);
+    training.settings = training.settings || {};
+    training.settings.topic = names.length === 1 ? names[0] : `國中數學：${names.slice(0,3).join('、')}${names.length>3?'…':''}`;
+    training.settings.dailyQuestions = bankState.settings.count;
+    training.settings.sessionQuestions = Math.max(5, Math.ceil(bankState.settings.count / 2));
+    training.activeView = 'plan';
+    writeTrainingState(training);
+    window.alert(`已把 ${bankState.settings.count} 題與所選主題套用到今日計畫設定。切回「今日計畫」即可產生時間表。`);
+  }
+
+  function bindBankEvents() {
+    ['qbGrade','qbDifficulty','qbCount','qbMode','qbMinutes'].forEach((id) => $(id).addEventListener('change', () => {
+      if (id === 'qbGrade') {
+        const ids = eligibleTopics().map((topic)=>topic.id);
+        bankState.settings.topics = ids;
+        renderTopicChecks();
+      }
+      saveSettingsFromForm();
+    }));
+    $('qbGenerateButton').addEventListener('click', startSession);
+    $('qbSelectAllButton').addEventListener('click', selectAllCurrentGrade);
+    $('qbApplyPlanButton').addEventListener('click', applyToTodayPlan);
+    $('qbSubmitButton').addEventListener('click', () => submitAnswer(false));
+    $('qbSkipButton').addEventListener('click', () => submitAnswer(true));
+    $('qbNextButton').addEventListener('click', nextQuestion);
+    $('qbQuitButton').addEventListener('click', () => { if (window.confirm('提前結束並計算目前結果？')) finishSession(); });
+  }
+
+  injectUi();
+})();
