@@ -78,11 +78,11 @@
         const nameX = 260;
         fitText(context, session.name, 480, 34, 25, 800);
         context.fillStyle = '#f5f0e5';
-        context.fillText(session.name, nameX, cardY + 48);
+        context.fillText(session.name, nameX, cardY + 48, 480);
         const detail = [session.teacher, session.room ? `教室：${session.room}` : '', session.category].filter(Boolean).join(' · ');
         fitText(context, detail, 590, 22, 17, 500);
         context.fillStyle = '#9aabba';
-        context.fillText(detail, nameX, cardY + 84);
+        context.fillText(detail, nameX, cardY + 84, 590);
 
         const duration = `${session.end - session.start} 分鐘`;
         context.font = '700 20px "Noto Sans TC", system-ui, sans-serif';
