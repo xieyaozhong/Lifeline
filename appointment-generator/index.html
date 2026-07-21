@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#071522" />
+  <meta name="description" content="輸入預約訊息與 LINE 官方帳號 ID，產生可直接開啟聊天室並預填訊息的 QR Code。" />
+  <title>約定產生器｜LINE 預約 QR</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <div class="brand-wrap">
+      <a class="back-link" href="../">← Lifeline</a>
+      <div class="brand-mark" aria-hidden="true"><span></span></div>
+      <div>
+        <p class="eyebrow">APPOINTMENT GENERATOR</p>
+        <h1>約定產生器</h1>
+      </div>
+    </div>
+    <div class="header-note">
+      <span class="status-dot"></span>
+      <span>資料只在瀏覽器中處理</span>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="intro-card panel">
+      <div>
+        <p class="eyebrow">ONE SCAN BOOKING</p>
+        <h2>把一句約定，變成可以直接掃描的預約入口</h2>
+        <p>輸入 LINE 官方帳號 ID 與預約文字，系統會產生能開啟指定官方帳號聊天室、並自動填入訊息的 QR Code。</p>
+      </div>
+      <div class="flow-pills" aria-label="使用流程">
+        <span>1 輸入約定</span><span>2 產生 QR</span><span>3 掃碼開啟 LINE</span><span>4 確認送出</span>
+      </div>
+    </section>
+
+    <div class="generator-grid">
+      <section class="form-panel panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">BOOKING CONTENT</p>
+            <h2>約定內容</h2>
+          </div>
+          <button class="ghost-button" id="resetButton" type="button">清除</button>
+        </div>
+
+        <form id="appointmentForm" novalidate>
+          <div class="form-grid">
+            <label class="wide">
+              <span>LINE 官方帳號 ID</span>
+              <div class="line-id-input">
+                <span>@</span>
+                <input id="lineId" autocomplete="off" inputmode="text" placeholder="例如：macaronmath" maxlength="40" required />
+              </div>
+              <small>請輸入 LINE Official Account Manager 顯示的 Basic ID 或 Premium ID。</small>
+            </label>
+
+            <label>
+              <span>官方帳號顯示名稱</span>
+              <input id="accountName" autocomplete="off" placeholder="例如：馬卡龍數學教室" maxlength="40" />
+            </label>
+
+            <label>
+              <span>約定類型</span>
+              <select id="appointmentType">
+                <option value="lesson">預約課程</option>
+                <option value="consultation">預約諮詢</option>
+                <option value="visit">預約參觀</option>
+                <option value="custom">自訂約定</option>
+              </select>
+            </label>
+
+            <label>
+              <span>老師／對象</span>
+              <input id="teacherName" autocomplete="off" placeholder="例如：馬卡龍老師" maxlength="30" />
+            </label>
+
+            <label>
+              <span>課程／項目</span>
+              <input id="subjectName" autocomplete="off" placeholder="例如：數學課程" maxlength="40" />
+            </label>
+
+            <label>
+              <span>希望日期</span>
+              <input id="preferredDate" type="date" />
+            </label>
+
+            <label>
+              <span>希望時段</span>
+              <select id="preferredTime">
+                <option value="">尚未決定</option>
+                <option>上午 09:00–12:00</option>
+                <option>下午 13:00–17:00</option>
+                <option>晚上 18:00–21:00</option>
+              </select>
+            </label>
+
+            <label class="wide">
+              <span>預約訊息</span>
+              <textarea id="message" rows="6" maxlength="200" required>您好，我想預約馬卡龍老師的數學課程，請問近期有哪些可以安排的時段？謝謝。</textarea>
+              <div class="field-meta"><small>掃碼後會填入 LINE 訊息輸入框，仍需使用者按下送出。</small><span id="messageCount">0 / 200</span></div>
+            </label>
+          </div>
+
+          <div class="template-row">
+            <button class="template-chip" type="button" data-template="您好，我想預約{老師}的{項目}，請問近期有哪些可以安排的時段？謝謝。">快速預約</button>
+            <button class="template-chip" type="button" data-template="您好，我想了解{老師}的{項目}內容與收費方式，方便提供相關資訊嗎？謝謝。">課程詢問</button>
+            <button class="template-chip" type="button" data-template="您好，我希望預約{日期}{時段}的{項目}，請協助確認是否可以安排，謝謝。">指定時段</button>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-button" id="generateButton" type="submit">產生預約 QR Code</button>
+            <button class="soft-button" id="savePresetButton" type="button">儲存目前設定</button>
+          </div>
+        </form>
+
+        <section class="preset-section">
+          <div class="section-heading"><h3>最近設定</h3><button id="clearPresetsButton" type="button">清除紀錄</button></div>
+          <div class="preset-list" id="presetList"></div>
+        </section>
+      </section>
+
+      <section class="preview-panel panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">QR PREVIEW</p>
+            <h2>掃碼預約</h2>
+          </div>
+          <span class="ready-badge" id="readyBadge">等待產生</span>
+        </div>
+
+        <div class="qr-tabs" role="tablist" aria-label="QR 類型">
+          <button class="qr-tab active" type="button" data-qr-mode="message">直接預約</button>
+          <button class="qr-tab" type="button" data-qr-mode="friend">加入好友</button>
+        </div>
+
+        <div class="qr-stage">
+          <canvas id="qrCanvas" width="320" height="320" aria-label="預約 QR Code"></canvas>
+          <div class="qr-placeholder" id="qrPlaceholder">
+            <div class="placeholder-icon">⌗</div>
+            <strong>尚未產生 QR Code</strong>
+            <span>填寫 LINE ID 與訊息後按下產生</span>
+          </div>
+        </div>
+
+        <div class="qr-caption">
+          <strong id="qrTitle">直接預約訊息</strong>
+          <p id="qrDescription">掃碼後會開啟指定 LINE 官方帳號聊天室，並把約定文字填入訊息欄。</p>
+        </div>
+
+        <div class="message-preview">
+          <p class="eyebrow">MESSAGE PREVIEW</p>
+          <div class="line-bubble" id="messagePreview">您好，我想預約馬卡龍老師的數學課程，請問近期有哪些可以安排的時段？謝謝。</div>
+        </div>
+
+        <div class="link-box">
+          <span>LINE 深連結</span>
+          <code id="generatedLink">尚未產生</code>
+        </div>
+
+        <div class="preview-actions">
+          <button class="primary-button" id="openLineButton" type="button" disabled>測試開啟 LINE</button>
+          <button class="soft-button" id="copyLinkButton" type="button" disabled>複製連結</button>
+          <button class="soft-button" id="downloadButton" type="button" disabled>下載 PNG</button>
+        </div>
+
+        <aside class="permission-note">
+          <strong>LINE 權限說明</strong>
+          <p>LINE 不允許網頁在未經同意下自動加好友。直接預約 QR 會開啟聊天室並預填訊息；尚未加入者可切換「加入好友」QR 完成加入。</p>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
