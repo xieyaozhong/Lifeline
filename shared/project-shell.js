@@ -19,13 +19,15 @@
     { id: 'portal', name: '專案中心', detail: '所有工具、部署狀態與入口', icon: '◎', href: 'portal/' },
     { id: 'lifeline', name: '生命線', detail: '任務、生命價值與即時推薦', icon: '✦', href: '' },
     { id: 'schedule', name: '時序環', detail: '圓形課表、三日總覽與兒童全天課程', icon: '◷', href: 'schedule-studio/' },
+    { id: 'training', name: '自主訓練自核單', detail: '題量排程、自核紀錄與回課分析', icon: '✓', href: 'self-training-checklist/' },
     { id: 'appointment', name: '約定產生器', detail: 'LINE 預約深連結與 QR Code', icon: '⌗', href: 'appointment-generator/' }
   ];
 
   const pathname = location.pathname.replace(/\/+$/, '/');
   const currentId = pathname.includes('/appointment-generator/') ? 'appointment'
-    : pathname.includes('/schedule-studio/') ? 'schedule'
-      : pathname.includes('/portal/') ? 'portal' : 'lifeline';
+    : pathname.includes('/self-training-checklist/') ? 'training'
+      : pathname.includes('/schedule-studio/') ? 'schedule'
+        : pathname.includes('/portal/') ? 'portal' : 'lifeline';
 
   const resolve = (href) => new URL(href, rootUrl).href;
   const toggle = document.createElement('button');
@@ -46,7 +48,7 @@
       <div>
         <p class="project-shell-kicker">LIFELINE SUITE</p>
         <h2>專案工具箱</h2>
-        <p>在生命管理、課程安排與預約工具之間快速切換。</p>
+        <p>在生命管理、課程安排、自主訓練與預約工具之間快速切換。</p>
       </div>
       <button class="project-shell-close" type="button" aria-label="關閉專案導覽">×</button>
     </div>
