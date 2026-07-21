@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#071522" />
+  <meta name="description" content="Lifeline 專案中心：生命線、時序環與約定產生器的統一入口。" />
+  <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Lifeline 專案中心</title>
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="site-head">
+    <a class="brand" href="../"><span class="brand-mark">✦</span><span><small>LIFELINE SUITE</small><strong>專案中心</strong></span></a>
+    <div class="status"><span></span><div><small>GitHub Pages</small><strong id="deployStatus">檢查中</strong></div></div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">ONE SYSTEM · MULTIPLE TOOLS</p>
+        <h1>把生活、課程與約定，放進同一套工具系統。</h1>
+        <p class="lead">所有頁面採相同的午夜藍、象牙白與香檳金設計語言，並透過右下角工具選單快速切換。</p>
+      </div>
+      <div class="hero-time"><span id="todayLabel">—</span><strong id="clock">--:--</strong><small>Asia/Taipei</small></div>
+    </section>
+
+    <section class="app-grid" aria-label="Lifeline 應用程式">
+      <a class="app-card featured" href="../">
+        <span class="app-number">01</span><span class="app-icon">✦</span>
+        <div><p>PERSONAL VALUE SYSTEM</p><h2>生命線</h2><span>管理任務、五維生命價值、即時推薦與生命速度。</span></div><b>開啟應用 ›</b>
+      </a>
+      <a class="app-card" href="../schedule-studio/">
+        <span class="app-number">02</span><span class="app-icon">◷</span>
+        <div><p>SCHEDULE STUDIO</p><h2>時序環</h2><span>拖曳課程、自動排課、圓形時間軸與兒童全天課程。</span></div><b>開啟應用 ›</b>
+      </a>
+      <a class="app-card" href="../appointment-generator/">
+        <span class="app-number">03</span><span class="app-icon">⌗</span>
+        <div><p>APPOINTMENT GENERATOR</p><h2>約定產生器</h2><span>建立 LINE 官方帳號預約訊息、深連結與 QR Code。</span></div><b>開啟應用 ›</b>
+      </a>
+    </section>
+
+    <section class="system-grid">
+      <article><p class="eyebrow">LOCAL FIRST</p><h3>資料留在瀏覽器</h3><p>任務、課表與常用約定預設使用 localStorage，不會自動傳到伺服器。</p></article>
+      <article><p class="eyebrow">RESPONSIVE</p><h3>手機與桌面共用</h3><p>所有頁面支援觸控、安全區與不同螢幕寬度。</p></article>
+      <article><p class="eyebrow">DEPLOYMENT</p><h3>自動驗證後發布</h3><p id="buildInfo">正在讀取最近一次部署資訊。</p></article>
+    </section>
+  </main>
+
+  <footer><span>生命線 Lifeline Suite</span><a href="https://github.com/xieyaozhong/Lifeline" target="_blank" rel="noreferrer">檢視原始碼 ↗</a></footer>
+  <script src="../shared/project-shell.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
