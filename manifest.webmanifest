@@ -1,7 +1,7 @@
 {
   "name": "生命線 Lifeline Suite",
   "short_name": "生命線",
-  "description": "整合任務、生命價值、課程安排與 LINE 預約工具。",
+  "description": "整合任務、生命價值、課程安排、自主訓練與 LINE 預約工具。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -32,6 +32,13 @@
       "short_name": "課表",
       "description": "開啟圓形課表工作室",
       "url": "./schedule-studio/",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "自主訓練自核單",
+      "short_name": "訓練自核",
+      "description": "規劃每日題量、記錄完成狀況並分析下次作業",
+      "url": "./self-training-checklist/",
       "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
