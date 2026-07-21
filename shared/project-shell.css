@@ -1,0 +1,103 @@
+:root {
+  --project-shell-bg: rgba(7, 17, 31, .94);
+  --project-shell-line: rgba(230, 207, 146, .22);
+  --project-shell-text: #f5f0e5;
+  --project-shell-muted: #98a9ba;
+  --project-shell-gold: #e7ca86;
+  --project-shell-teal: #83d8cd;
+}
+
+.project-shell-toggle {
+  position: fixed;
+  z-index: 9998;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 0 15px;
+  border: 1px solid var(--project-shell-line);
+  border-radius: 999px;
+  color: var(--project-shell-text);
+  background: linear-gradient(145deg, rgba(14, 34, 53, .97), rgba(7, 20, 33, .97));
+  box-shadow: 0 16px 45px rgba(0, 0, 0, .38), inset 0 0 24px rgba(231, 202, 134, .05);
+  backdrop-filter: blur(18px);
+  font: 700 13px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+  cursor: pointer;
+}
+.project-shell-toggle:hover { border-color: rgba(231, 202, 134, .48); transform: translateY(-1px); }
+.project-shell-toggle:focus-visible,
+.project-shell-panel a:focus-visible,
+.project-shell-close:focus-visible { outline: 3px solid rgba(131, 216, 205, .48); outline-offset: 3px; }
+.project-shell-toggle-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--project-shell-teal); box-shadow: 0 0 13px var(--project-shell-teal); }
+
+.project-shell-backdrop {
+  position: fixed;
+  z-index: 9998;
+  inset: 0;
+  background: rgba(1, 7, 13, .55);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+.project-shell-backdrop.open { opacity: 1; pointer-events: auto; }
+
+.project-shell-panel {
+  position: fixed;
+  z-index: 9999;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 58px);
+  width: min(390px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid var(--project-shell-line);
+  border-radius: 24px;
+  color: var(--project-shell-text);
+  background: var(--project-shell-bg);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .52);
+  backdrop-filter: blur(24px);
+  opacity: 0;
+  transform: translateY(14px) scale(.98);
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+}
+.project-shell-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.project-shell-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 20px 15px; border-bottom: 1px solid rgba(255,255,255,.07); }
+.project-shell-kicker { margin: 0 0 5px; color: var(--project-shell-gold); font-size: 10px; font-weight: 800; letter-spacing: .2em; }
+.project-shell-head h2 { margin: 0; font-size: 20px; }
+.project-shell-head p:last-child { margin: 7px 0 0; color: var(--project-shell-muted); font-size: 12px; line-height: 1.55; }
+.project-shell-close { display: grid; width: 36px; height: 36px; place-items: center; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.09); border-radius: 11px; color: var(--project-shell-muted); background: rgba(255,255,255,.04); cursor: pointer; font-size: 20px; }
+.project-shell-grid { display: grid; gap: 9px; padding: 14px; }
+.project-shell-app {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 15px;
+  color: inherit;
+  background: rgba(255,255,255,.025);
+  text-decoration: none;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.project-shell-app:hover { border-color: rgba(231, 202, 134, .32); background: rgba(231, 202, 134, .055); transform: translateX(-2px); }
+.project-shell-app.current { border-color: rgba(131,216,205,.3); background: rgba(131,216,205,.07); }
+.project-shell-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: rgba(255,255,255,.055); color: var(--project-shell-gold); font-size: 18px; }
+.project-shell-app strong { display: block; font-size: 13px; }
+.project-shell-app span { display: block; margin-top: 4px; color: var(--project-shell-muted); font-size: 10px; line-height: 1.45; }
+.project-shell-arrow { color: var(--project-shell-muted); font-size: 17px; }
+.project-shell-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px 16px; color: var(--project-shell-muted); font-size: 10px; }
+.project-shell-foot a { color: var(--project-shell-gold); text-decoration: none; }
+
+@media (max-width: 560px) {
+  .project-shell-toggle { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); min-height: 44px; padding: 0 13px; }
+  .project-shell-toggle-label { display: none; }
+  .project-shell-panel { right: 10px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 54px); width: calc(100vw - 20px); border-radius: 20px; }
+}
+
+@media print {
+  .project-shell-toggle, .project-shell-panel, .project-shell-backdrop { display: none !important; }
+}
