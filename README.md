@@ -1,30 +1,42 @@
-# 生命線 Lifeline
+# 生命線 Lifeline Suite
 
-把每日任務、能力成長與生命價值連結起來的個人管理 PWA。
+一套整合個人任務、生命價值、課程安排與 LINE 預約入口的瀏覽器工具系統。
 
-## 線上版本
+## 線上入口
 
-GitHub Pages 部署完成後，可從以下網址開啟：
+- 生命線：`https://xieyaozhong.github.io/Lifeline/`
+- 專案中心：`https://xieyaozhong.github.io/Lifeline/portal/`
+- 時序環：`https://xieyaozhong.github.io/Lifeline/schedule-studio/`
+- 約定產生器：`https://xieyaozhong.github.io/Lifeline/appointment-generator/`
 
-`https://xieyaozhong.github.io/Lifeline/`
+所有頁面右下角都有共用的 Lifeline 工具切換面板。
 
-## 目前功能
+## 應用程式
+
+### 生命線
 
 - 健康、智力、財富、地位、技能五維生命值
-- 生命總值、今日增加值與生命價值／小時
-- 固定時間、每日、每週及完成後間隔重複任務
-- 任務限時倒數條，超時後自動從當日任務移除
-- 每秒即時刷新任務狀態，依時間、能量、價值效率與空檔自動推薦任務
-- 每日自動排程與負荷控制
-- 任務完成比例、品質、難度、連續與槓桿係數
-- 維護債、歷史紀錄與生命線趨勢
-- JSON 匯出／匯入備份
-- 手機與桌面自適應介面
-- PWA 安裝及離線快取
+- 任務限時、超時處理與即時推薦
+- 每日自動排程、生命速度與維護債
+- JSON 匯出／匯入與 PWA 離線快取
+
+### 時序環
+
+- 拖曳課程卡，自動尋找可用時段
+- 24 小時圓形課表與傳統課表
+- 連續三日總覽與目前課程指示
+- 3～12 歲兒童 09:00–17:00 全天課程
+- 依年齡、場域與活動類型自動安排休息、午餐與教室
+
+### 約定產生器
+
+- LINE 官方帳號預約訊息模板
+- 直接預約與加入好友兩種 QR Code
+- LINE 深連結、PNG 下載與常用設定保存
 
 ## 資料儲存
 
-目前資料保存在瀏覽器的 `localStorage`。清除網站資料前，請先從設定頁匯出 JSON 備份。
+目前任務、課表與常用約定預設保存在瀏覽器 `localStorage`。清除網站資料前，請先匯出需要保留的資料。
 
 ## 本機執行
 
@@ -38,6 +50,31 @@ GitHub Pages 部署完成後，可從以下網址開啟：
 python3 server.py
 ```
 
-## 部署
+## 本機建置與驗證
 
-推送到 `main` 分支後，`.github/workflows/pages.yml` 會自動建置並部署 GitHub Pages。
+```bash
+python3 scripts/validate_site.py
+python3 scripts/build_site.py
+```
+
+建置結果會輸出到 `_site/`，並自動：
+
+- 複製所有應用程式與共用資源
+- 注入全站工具切換面板
+- 產生 `build-info.json`
+- 保留 GitHub Pages 的 `404.html`、`robots.txt` 與 `sitemap.xml`
+
+## GitHub Pages 部署
+
+推送到 `main` 後，`.github/workflows/pages.yml` 會執行：
+
+1. 組合並檢查 Lifeline 分段 JavaScript。
+2. 檢查所有 JavaScript 語法。
+3. 檢查 HTML 重複 ID 與本機檔案連結。
+4. 建置完整 `_site`。
+5. 驗證四個應用程式入口與部署資訊。
+6. 上傳並發布 GitHub Pages。
+
+Pull Request 另有 `.github/workflows/validate.yml`，只執行驗證與建置，不會發布網站。
+
+第一次部署需在儲存庫 **Settings → Pages → Build and deployment** 將來源設為 **GitHub Actions**。
