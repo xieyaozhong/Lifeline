@@ -1,0 +1,29 @@
+name: Validate Lifeline web applications
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Validate source and build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat app-v2.*.part > /tmp/lifeline-v2.js
+          node --check /tmp/lifeline-v2.js
+          find . -type f -name '*.js' -not -path './.git/*' -print0 | xargs -0 -n1 node --check
+          python scripts/validate_site.py
+          python scripts/build_site.py
+          test -s _site/build-info.json
+          test -f _site/404.html
