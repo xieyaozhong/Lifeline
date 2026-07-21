@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#071522" />
+  <meta name="description" content="自主訓練自核單：嚴格規劃每日題量、解題與檢討時間，並依完成狀況彈性調整下次練習量。" />
+  <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+  <title>自主訓練自核單｜Lifeline</title>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <div class="brand-wrap">
+      <a class="back-link" href="../portal/">← 專案中心</a>
+      <div class="brand-mark" aria-hidden="true"><span>✓</span></div>
+      <div>
+        <p class="eyebrow">SELF TRAINING CHECKLIST</p>
+        <h1>自主訓練自核單</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="live-clock"><span id="liveDate">—</span><strong id="liveTime">--:--</strong></div>
+      <button class="soft-button" id="exportButton" type="button">匯出紀錄</button>
+      <button class="primary-button" id="printButton" type="button">列印自核單</button>
+    </div>
+  </header>
+
+  <nav class="view-tabs" aria-label="自主訓練頁面">
+    <button class="view-tab active" type="button" data-view="plan">今日計畫</button>
+    <button class="view-tab" type="button" data-view="records">訓練紀錄</button>
+    <button class="view-tab" type="button" data-view="analysis">回課分析</button>
+  </nav>
+
+  <main>
+    <section class="view-panel active" id="planView">
+      <section class="profile-strip panel">
+        <label><span>學生</span><input id="studentName" maxlength="24" placeholder="學生姓名" /></label>
+        <label><span>科目</span><input id="subjectName" maxlength="24" value="數學" /></label>
+        <label class="profile-goal"><span>本階段目標</span><input id="stageGoal" maxlength="80" placeholder="例如：兩週內穩定完成一元二次方程 80% 正確率" /></label>
+        <div class="profile-status"><span>計畫狀態</span><strong id="profileStatus">等待建立</strong></div>
+      </section>
+
+      <div class="plan-layout">
+        <aside class="planner-panel panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">STRICT DAILY PLAN</p><h2>每日訓練規格</h2></div>
+            <span class="status-badge" id="capacityBadge">未計算</span>
+          </div>
+
+          <div class="planner-form">
+            <label class="wide"><span>訓練主題</span><input id="trainingTopic" maxlength="50" value="一元二次方程式" /></label>
+            <label><span>日期</span><input id="trainingDate" type="date" /></label>
+            <label><span>每日目標題數</span><input id="dailyQuestions" type="number" min="5" max="300" step="5" value="40" /></label>
+            <label><span>開始時間</span><input id="startTime" type="time" value="19:00" /></label>
+            <label><span>結束時間</span><input id="endTime" type="time" value="21:30" /></label>
+            <label><span>每輪解題時間</span><input id="solveMinutes" type="number" min="10" max="120" step="5" value="35" /></label>
+            <label><span>每輪檢討時間</span><input id="reviewMinutes" type="number" min="5" max="60" step="5" value="15" /></label>
+            <label><span>輪間休息</span><input id="breakMinutes" type="number" min="0" max="30" step="5" value="10" /></label>
+            <label><span>彈性緩衝比例</span><input id="bufferPercent" type="number" min="0" max="35" step="5" value="15" /></label>
+            <label><span>每輪理想題數</span><input id="sessionQuestions" type="number" min="3" max="60" step="1" value="12" /></label>
+            <label><span>規劃強度</span><select id="strictness"><option value="steady">穩定</option><option value="strict" selected>嚴格</option><option value="challenge">挑戰</option></select></label>
+          </div>
+
+          <div class="planner-actions">
+            <button class="primary-button full" id="generatePlanButton" type="button">產生今日嚴格計畫</button>
+            <button class="soft-button full" id="loadDemoButton" type="button">載入示範學生</button>
+          </div>
+
+          <div class="planning-rules">
+            <strong>排程規則</strong>
+            <ul>
+              <li>解題後必須保留獨立檢討時段。</li>
+              <li>未完成題量最多只加重後續單輪 20%。</li>
+              <li>無法安全吸收的題量會轉為下次待補，不硬塞。</li>
+            </ul>
+          </div>
+        </aside>
+
+        <section class="timeline-panel panel">
+          <div class="timeline-toolbar">
+            <div>
+              <p class="eyebrow">TODAY'S TRAINING</p>
+              <h2 id="planTitle">今日尚未建立訓練計畫</h2>
+              <p id="planSubtitle">設定題量與時間後，系統會拆分成解題、檢討、休息與緩衝。</p>
+            </div>
+            <div class="timeline-actions">
+              <button class="soft-button" id="previousDateButton" type="button">‹ 前一天</button>
+              <button class="soft-button" id="todayButton" type="button">今天</button>
+              <button class="soft-button" id="nextDateButton" type="button">後一天 ›</button>
+            </div>
+          </div>
+
+          <section class="summary-grid">
+            <article><span>目標題數</span><strong id="targetQuestionsMetric">0</strong></article>
+            <article><span>已完成</span><strong id="completedQuestionsMetric">0</strong></article>
+            <article><span>目前正確率</span><strong id="accuracyMetric">—</strong></article>
+            <article><span>待補題數</span><strong id="carryoverMetric">0</strong></article>
+          </section>
+
+          <section class="current-block" id="currentBlockCard">
+            <div class="current-label"><span class="pulse"></span><span id="currentBlockLabel">目前沒有進行中的訓練</span></div>
+            <h3 id="currentBlockName">等待排程</h3>
+            <p id="currentBlockMeta">—</p>
+            <div class="progress-track"><span id="currentBlockProgress"></span></div>
+          </section>
+
+          <div class="timeline-head">
+            <h3>時間線</h3>
+            <div>
+              <button class="soft-button" id="adjustPlanButton" type="button">彈性重排剩餘計畫</button>
+              <button class="danger-button" id="clearPlanButton" type="button">清空本日</button>
+            </div>
+          </div>
+          <div class="training-timeline" id="trainingTimeline"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view-panel" id="recordsView">
+      <div class="page-heading">
+        <div><p class="eyebrow">TRAINING LOG</p><h2>訓練紀錄</h2><p>學生每次完成後留下題數、正確率、耗時與卡關原因。</p></div>
+        <div class="record-filters"><select id="recordRange"><option value="7">最近 7 天</option><option value="14" selected>最近 14 天</option><option value="30">最近 30 天</option><option value="all">全部</option></select><button class="danger-button" id="clearRecordsButton" type="button">清除紀錄</button></div>
+      </div>
+      <div class="records-layout">
+        <section class="records-list panel" id="recordsList"></section>
+        <aside class="adjustment-log panel">
+          <div class="panel-heading"><div><p class="eyebrow">ADJUSTMENT LOG</p><h2>彈性調整紀錄</h2></div></div>
+          <div id="adjustmentList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view-panel" id="analysisView">
+      <div class="page-heading">
+        <div><p class="eyebrow">TEACHER REVIEW</p><h2>回課快速分析</h2><p>用近期真實完成量，而不是只看原始作業量，決定下一次練習。</p></div>
+        <button class="primary-button" id="copyTeacherBriefButton" type="button">複製教師摘要</button>
+      </div>
+
+      <section class="analysis-metrics">
+        <article class="panel"><span>計畫完成率</span><strong id="analysisCompletion">—</strong><small id="analysisCompletionNote">尚無資料</small></article>
+        <article class="panel"><span>整體正確率</span><strong id="analysisAccuracy">—</strong><small id="analysisAccuracyNote">尚無資料</small></article>
+        <article class="panel"><span>平均解題速度</span><strong id="analysisPace">—</strong><small>分鐘／題</small></article>
+        <article class="panel"><span>檢討落實率</span><strong id="analysisReview">—</strong><small id="analysisReviewNote">尚無資料</small></article>
+      </section>
+
+      <div class="analysis-layout">
+        <section class="trend-panel panel">
+          <div class="panel-heading"><div><p class="eyebrow">14-DAY TREND</p><h2>近期訓練趨勢</h2></div><span class="status-badge" id="trendBadge">等待資料</span></div>
+          <canvas id="trendCanvas" width="900" height="330" aria-label="近期訓練題量與正確率趨勢"></canvas>
+          <div class="chart-legend"><span><i class="legend planned"></i>計畫題數</span><span><i class="legend completed"></i>完成題數</span><span><i class="legend accuracy"></i>正確率</span></div>
+        </section>
+
+        <aside class="recommend-panel panel">
+          <p class="eyebrow">NEXT ASSIGNMENT</p>
+          <h2>下次練習量建議</h2>
+          <div class="recommend-number"><strong id="nextQuestionRecommendation">—</strong><span>題</span></div>
+          <div class="recommend-grid">
+            <div><span>建議解題時間</span><strong id="nextSolveRecommendation">—</strong></div>
+            <div><span>建議檢討比例</span><strong id="nextReviewRecommendation">—</strong></div>
+            <div><span>建議難度配置</span><strong id="nextDifficultyRecommendation">—</strong></div>
+          </div>
+          <p class="recommend-reason" id="recommendReason">完成幾次訓練後，系統會依完成率、正確率、速度與卡關程度調整。</p>
+          <button class="soft-button full" id="applyRecommendationButton" type="button">套用到下一個訓練日</button>
+        </aside>
+      </div>
+
+      <div class="analysis-bottom">
+        <section class="topic-panel panel">
+          <div class="panel-heading"><div><p class="eyebrow">TOPIC DIAGNOSIS</p><h2>主題診斷</h2></div></div>
+          <div class="topic-table" id="topicTable"></div>
+        </section>
+        <section class="teacher-brief panel">
+          <div class="panel-heading"><div><p class="eyebrow">QUICK BRIEF</p><h2>教師回課摘要</h2></div></div>
+          <div id="teacherBrief"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="checkDialog" class="check-dialog">
+    <form id="checkForm" method="dialog">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">SELF CHECK</p><h2 id="checkDialogTitle">完成訓練自核</h2></div>
+        <button class="icon-button" value="cancel" type="button" id="closeCheckDialogButton" aria-label="關閉">×</button>
+      </div>
+      <input id="checkBlockId" type="hidden" />
+      <div class="check-summary" id="checkSummary"></div>
+      <div class="form-grid">
+        <label><span>實際作答題數</span><input id="attemptedQuestions" type="number" min="0" max="500" required /></label>
+        <label><span>答對題數</span><input id="correctQuestions" type="number" min="0" max="500" required /></label>
+        <label><span>實際解題分鐘</span><input id="actualMinutes" type="number" min="1" max="360" required /></label>
+        <label><span>實際檢討分鐘</span><input id="actualReviewMinutes" type="number" min="0" max="180" value="0" required /></label>
+        <label><span>體感難度</span><select id="feltDifficulty"><option value="1">1 很輕鬆</option><option value="2">2 偏簡單</option><option value="3" selected>3 適中</option><option value="4">4 偏難</option><option value="5">5 很吃力</option></select></label>
+        <label><span>主要卡關原因</span><select id="blockReason"><option value="none">無明顯卡關</option><option value="concept">概念不熟</option><option value="calculation">計算錯誤</option><option value="reading">題意理解</option><option value="method">方法選擇</option><option value="focus">專注不足</option><option value="time">時間不足</option></select></label>
+        <label class="wide"><span>自核筆記</span><textarea id="checkNote" rows="3" maxlength="300" placeholder="錯題特徵、最容易卡住的步驟、下次提醒"></textarea></label>
+      </div>
+      <div class="dialog-actions">
+        <button class="danger-button" id="markSkippedButton" type="button">標記未完成</button>
+        <span></span>
+        <button class="soft-button" value="cancel" type="button" id="cancelCheckButton">取消</button>
+        <button class="primary-button" value="default" type="submit">儲存自核結果</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
