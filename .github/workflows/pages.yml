@@ -39,6 +39,7 @@ jobs:
           node --check /tmp/junior-math-bank.js
           cat schedule-studio/date-export.*.part > /tmp/schedule-date-export.js
           node --check /tmp/schedule-date-export.js
+          node --check schedule-studio/child-three-day-normalize.js
           node --check schedule-studio/child-three-day.js
           find . -type f -name '*.js' -not -path './.git/*' -print0 | xargs -0 -n1 node --check
           python scripts/validate_site.py
@@ -55,8 +56,10 @@ jobs:
           test -f _site/schedule-studio/date-export-loader.js
           test -f _site/schedule-studio/date-export.04.part
           test -f _site/schedule-studio/child-three-day.css
+          test -f _site/schedule-studio/child-three-day-normalize.js
           test -f _site/schedule-studio/child-three-day.js
           grep -q 'date-export-loader.js' _site/schedule-studio/index.html
+          grep -q 'child-three-day-normalize.js' _site/schedule-studio/index.html
           grep -q 'child-three-day.js' _site/schedule-studio/index.html
           test -f _site/self-training-checklist/index.html
           test -f _site/self-training-checklist/question-bank.css
