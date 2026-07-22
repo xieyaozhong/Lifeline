@@ -1,4 +1,4 @@
-const CACHE = 'lifeline-suite-cache-v7';
+const CACHE = 'lifeline-suite-cache-v8';
 const BASE = new URL('./', self.location.href);
 const ASSETS = [
   './',
@@ -28,6 +28,8 @@ const ASSETS = [
   './schedule-studio/app.js',
   './schedule-studio/child-day.css',
   './schedule-studio/child-day.js',
+  './schedule-studio/child-three-day.css',
+  './schedule-studio/child-three-day.js',
   './schedule-studio/date-export.css',
   './schedule-studio/date-export-loader.js',
   './schedule-studio/date-export.01.part',
