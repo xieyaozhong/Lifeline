@@ -71,16 +71,20 @@ def inject_schedule_extensions() -> None:
         OUTPUT / "schedule-studio" / "date-export-loader.js",
         OUTPUT / "schedule-studio" / "date-export.css",
         *[OUTPUT / "schedule-studio" / f"date-export.{index:02d}.part" for index in range(1, 5)],
+        OUTPUT / "schedule-studio" / "child-three-day.js",
+        OUTPUT / "schedule-studio" / "child-three-day.css",
     ]
     for path in required:
         if not path.exists():
             raise FileNotFoundError(f"Required schedule extension missing: {path.relative_to(OUTPUT)}")
     content = html_path.read_text(encoding="utf-8")
+    scripts: list[str] = []
     if "date-export-loader.js" not in content:
-        content = content.replace(
-            "</body>",
-            '  <script src="date-export-loader.js"></script>\n</body>',
-        )
+        scripts.append('  <script src="date-export-loader.js"></script>')
+    if "child-three-day.js" not in content:
+        scripts.append('  <script src="child-three-day.js"></script>')
+    if scripts:
+        content = content.replace("</body>", "\n".join(scripts) + "\n</body>")
         html_path.write_text(content, encoding="utf-8")
 
 
