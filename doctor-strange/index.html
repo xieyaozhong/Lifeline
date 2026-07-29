@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120b24" />
+  <meta name="description" content="奇異博士：會考衝刺全科進度複習規劃產生器，支援日、週、月課表、完成指標、學校事件與 PDF 輸出。" />
+  <title>奇異博士｜會考衝刺全科進度規劃器</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="portal-bg" aria-hidden="true"><span></span><span></span><span></span></div>
+  <header class="topbar">
+    <a class="back-link" href="../">← Lifeline</a>
+    <div class="brand">
+      <div class="sigil" aria-hidden="true"><i></i><b></b></div>
+      <div><p>EXAM SPRINT PLANNER</p><h1>奇異博士</h1></div>
+    </div>
+    <div class="top-actions">
+      <div class="countdown"><span>距離會考</span><strong id="countdownDays">—</strong><small id="examDateLabel">設定目標日</small></div>
+      <button class="ghost-button" id="demoButton" type="button">載入示範</button>
+      <button class="primary-button" id="generateButton" type="button">自動產生規劃</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero panel">
+      <div>
+        <p class="eyebrow">MASTER THE TIMELINE</p>
+        <h2>把講義、題庫、複習課程與個人模擬考，排進一條可以完成的會考時間線。</h2>
+        <p>依科目弱點、每日可用時間、學校重要事件與考前階段，自動配置練習量、檢討量及完成指標。</p>
+      </div>
+      <div class="phase-card">
+        <span>目前階段</span><strong id="phaseLabel">尚未產生</strong><small id="phaseDetail">完成設定後建立全科衝刺藍圖</small>
+        <div class="phase-track"><i id="phaseProgress"></i></div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <aside class="settings panel">
+        <div class="section-heading"><div><p class="eyebrow">PLAN INPUTS</p><h2>規劃條件</h2></div><button class="icon-button" id="collapseSettings" type="button" aria-label="收合設定">−</button></div>
+        <div id="settingsBody">
+          <div class="form-grid">
+            <label class="wide">學生姓名<input id="studentName" value="會考衝刺生" maxlength="20" /></label>
+            <label>學校<input id="schoolName" placeholder="例如：○○國中" maxlength="30" /></label>
+            <label>開始日期<input id="startDate" type="date" /></label>
+            <label>會考首日<input id="examDate" type="date" value="2027-05-15" /></label>
+            <label>平日可用分鐘<input id="weekdayMinutes" type="number" min="30" max="360" step="15" value="120" /></label>
+            <label>假日可用分鐘<input id="weekendMinutes" type="number" min="60" max="600" step="15" value="240" /></label>
+            <label>每週休息日<select id="restDay"><option value="6">星期六</option><option value="0" selected>星期日</option><option value="-1">不固定休息</option></select></label>
+            <label>每日最晚結束<select id="latestEnd"><option>20:30</option><option selected>21:30</option><option>22:30</option></select></label>
+          </div>
+
+          <div class="subheading"><h3>各科狀態</h3><span>待補強科目會自動提高練習比重</span></div>
+          <div class="subject-settings" id="subjectSettings"></div>
+
+          <div class="subheading"><h3>規劃內容</h3><span>可自由關閉不需要的模組</span></div>
+          <div class="resource-toggle-grid" id="resourceToggles"></div>
+
+          <div class="settings-actions">
+            <button class="soft-button" id="saveSettingsButton" type="button">儲存設定</button>
+            <button class="primary-button" id="generateSettingsButton" type="button">產生完整規劃</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <section class="metrics-grid" id="metricsGrid">
+          <article><span>完成率</span><strong id="completionRate">0%</strong><small id="completionDetail">0 / 0 個任務</small></article>
+          <article><span>累積題量</span><strong id="questionTotal">0</strong><small id="questionDetail">完成 0 題</small></article>
+          <article><span>規劃時數</span><strong id="plannedHours">0h</strong><small id="completedHours">完成 0h</small></article>
+          <article><span>模擬考</span><strong id="mockTotal">0</strong><small id="mockDetail">完成 0 回</small></article>
+        </section>
+
+        <section class="calendar-shell panel">
+          <div class="calendar-toolbar">
+            <div class="view-switch" role="tablist" aria-label="課表總覽">
+              <button class="view-button active" data-view="day" type="button">一天</button>
+              <button class="view-button" data-view="week" type="button">一週</button>
+              <button class="view-button" data-view="month" type="button">一個月</button>
+            </div>
+            <div class="date-nav">
+              <button class="icon-button" id="previousPeriod" type="button">‹</button>
+              <button class="date-heading" id="periodLabel" type="button">—</button>
+              <input id="focusDate" type="date" aria-label="選擇日期" />
+              <button class="icon-button" id="nextPeriod" type="button">›</button>
+              <button class="soft-button" id="todayButton" type="button">今天</button>
+            </div>
+            <div class="export-actions">
+              <button class="soft-button" id="exportJsonButton" type="button">匯出資料</button>
+              <button class="pdf-button" id="exportPdfButton" type="button">輸出目前總覽 PDF</button>
+            </div>
+          </div>
+          <div class="calendar-view" id="calendarView"></div>
+        </section>
+
+        <section class="lower-grid">
+          <article class="panel event-panel">
+            <div class="section-heading"><div><p class="eyebrow">SCHOOL EVENTS</p><h2>學校預期重要事件</h2></div><button class="soft-button" id="addEventButton" type="button">＋ 新增</button></div>
+            <p class="panel-note">事件日期可修改；「暫停」會清空當天練習，「減量」會降低當日負荷。</p>
+            <div class="event-list" id="eventList"></div>
+          </article>
+          <article class="panel progress-panel">
+            <div class="section-heading"><div><p class="eyebrow">SUBJECT PROGRESS</p><h2>各科完成指標</h2></div><span class="status-pill" id="planStatus">尚未產生</span></div>
+            <div class="subject-progress-list" id="subjectProgressList"></div>
+          </article>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="eventDialog" class="modal">
+    <form method="dialog" id="eventForm">
+      <div class="modal-heading"><div><p class="eyebrow">SCHOOL EVENT</p><h2 id="eventDialogTitle">新增重要事件</h2></div><button class="icon-button" value="cancel" type="button">×</button></div>
+      <input id="eventId" type="hidden" />
+      <div class="form-grid">
+        <label class="wide">事件名稱<input id="eventName" required maxlength="40" placeholder="例如：第二次段考" /></label>
+        <label>開始日期<input id="eventStart" type="date" required /></label>
+        <label>結束日期<input id="eventEnd" type="date" required /></label>
+        <label>影響方式<select id="eventImpact"><option value="block">暫停練習</option><option value="light" selected>練習減量 50%</option><option value="notice">僅顯示提醒</option></select></label>
+        <label>事件類型<select id="eventType"><option>段考</option><option>模擬考</option><option>校內活動</option><option>假期</option><option>會考</option><option>其他</option></select></label>
+      </div>
+      <div class="modal-actions"><button class="danger-button hidden" id="deleteEventButton" type="button">刪除事件</button><span></span><button class="ghost-button" value="cancel" type="button">取消</button><button class="primary-button" value="default" type="submit">儲存事件</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app-loader.js"></script>
+</body>
+</html>
