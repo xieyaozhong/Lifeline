@@ -1,0 +1,54 @@
+    const chips=[`${tasks.length} 個任務`,`${stats.questions} 題`,`${stats.minutes} 分鐘`,phaseForDate(key).name];let x=56;chips.forEach((text)=>{ctx.font='700 18px system-ui';const cw=ctx.measureText(text).width+34;roundedRect(ctx,x,188,cw,43,15);ctx.fillStyle='rgba(231,202,134,.09)';ctx.fill();ctx.strokeStyle='rgba(231,202,134,.25)';ctx.stroke();ctx.fillStyle='#e7ca86';ctx.fillText(text,x+17,216);x+=cw+10;});
+    let y=270;tasks.forEach((task)=>{const subject=subjectById(task.subjectId);roundedRect(ctx,56,y,w-112,126,22);ctx.fillStyle='rgba(255,255,255,.04)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.09)';ctx.stroke();ctx.fillStyle=subject.color;roundedRect(ctx,56,y,9,126,4);ctx.fill();ctx.fillStyle='#e7ca86';ctx.font='800 23px system-ui';ctx.fillText(minutesToTime(task.start),86,y+43);ctx.fillStyle='#8292a5';ctx.font='600 17px system-ui';ctx.fillText(minutesToTime(task.end),86,y+76);ctx.fillStyle='#f8f3e8';ctx.font='800 24px "Noto Sans TC",system-ui';ctx.fillText(task.title,244,y+44);ctx.fillStyle='#a79db8';ctx.font='500 17px "Noto Sans TC",system-ui';ctx.fillText(task.detail.slice(0,62),244,y+76);ctx.fillStyle='#78d4d1';ctx.font='700 16px "Noto Sans TC",system-ui';ctx.fillText(task.indicator.slice(0,72),244,y+104);y+=142;});
+    if(!tasks.length){ctx.fillStyle='#a79db8';ctx.font='700 32px "Noto Sans TC",system-ui';ctx.fillText('本日無排程／休息日',56,350);}
+    ctx.fillStyle='#7f748f';ctx.font='500 16px system-ui';ctx.fillText('Lifeline · 奇異博士｜完成後請逐項勾選並更新實際題量',56,h-48);return{canvas,pdfWidth:595.28,pdfHeight:841.89};
+  }
+
+  function drawWeekPdf(){
+    const w=1754,h=1240,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d'),dates=periodDates();
+    drawBase(ctx,w,h,'奇異博士｜一週全科衝刺課表',`${state.settings.studentName} · ${formatDate(dateKey(dates[0]),{year:true})}－${formatDate(dateKey(dates[6]),{year:true})}`,true);
+    const margin=40,gap=10,colW=(w-margin*2-gap*6)/7,top=190;dates.forEach((date,index)=>{const key=dateKey(date),tasks=tasksForDate(key),x=margin+index*(colW+gap);roundedRect(ctx,x,top,colW,h-top-70,18);ctx.fillStyle='rgba(255,255,255,.035)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.08)';ctx.stroke();ctx.fillStyle='#e7ca86';ctx.font='800 19px "Noto Sans TC",system-ui';ctx.fillText(new Intl.DateTimeFormat('zh-TW',{weekday:'short'}).format(date),x+14,top+31);ctx.fillStyle='#a79db8';ctx.font='500 14px system-ui';ctx.fillText(`${date.getMonth()+1}/${date.getDate()} · ${tasks.reduce((s,t)=>s+t.duration,0)}分`,x+14,top+55);let y=top+72;tasks.slice(0,9).forEach((task)=>{const subject=subjectById(task.subjectId);roundedRect(ctx,x+10,y,colW-20,82,12);ctx.fillStyle='rgba(255,255,255,.045)';ctx.fill();ctx.fillStyle=subject.color;ctx.fillRect(x+10,y,4,82);ctx.fillStyle='#f8f3e8';ctx.font='700 14px "Noto Sans TC",system-ui';ctx.fillText(`${minutesToTime(task.start)} ${task.title}`.slice(0,18),x+22,y+27);ctx.fillStyle='#9d91ae';ctx.font='500 12px system-ui';ctx.fillText(`${task.questions?task.questions+'題 · ':''}${task.duration}分鐘`,x+22,y+51);ctx.fillText(task.done?'✓ 已完成':'○ 待完成',x+22,y+70);y+=90;});});
+    ctx.fillStyle='#7f748f';ctx.font='500 15px system-ui';ctx.fillText('PDF 由 Lifeline · 奇異博士產生｜學校事件已納入減量或避讓',margin,h-32);return{canvas,pdfWidth:841.89,pdfHeight:595.28};
+  }
+
+  function drawMonthPdf(){
+    const w=1754,h=1240,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d'),focus=getDate(state.focusDate),dates=periodDates();
+    drawBase(ctx,w,h,'奇異博士｜月度衝刺總覽',`${state.settings.studentName} · ${new Intl.DateTimeFormat('zh-TW',{year:'numeric',month:'long'}).format(focus)}`,true);
+    const weekdays=['一','二','三','四','五','六','日'],margin=45,gap=7,cellW=(w-margin*2-gap*6)/7,top=190,cellH=150;weekdays.forEach((day,i)=>{ctx.fillStyle='#a79db8';ctx.font='700 15px system-ui';ctx.textAlign='center';ctx.fillText(`週${day}`,margin+i*(cellW+gap)+cellW/2,top-12);});ctx.textAlign='left';
+    dates.forEach((date,index)=>{const key=dateKey(date),tasks=tasksForDate(key),events=eventOnDate(key),x=margin+(index%7)*(cellW+gap),y=top+Math.floor(index/7)*(cellH+gap);roundedRect(ctx,x,y,cellW,cellH,13);ctx.fillStyle=date.getMonth()===focus.getMonth()?'rgba(255,255,255,.035)':'rgba(255,255,255,.014)';ctx.fill();ctx.strokeStyle='rgba(255,255,255,.07)';ctx.stroke();ctx.fillStyle='#f8f3e8';ctx.font='800 16px system-ui';ctx.fillText(String(date.getDate()),x+11,y+24);ctx.fillStyle='#a79db8';ctx.font='500 12px "Noto Sans TC",system-ui';ctx.fillText(tasks.length?`${tasks.length} 任務 · ${tasks.reduce((s,t)=>s+(t.questions||0),0)} 題`:'休息／無排程',x+11,y+48);tasks.slice(0,4).forEach((task,i)=>{ctx.fillStyle=subjectById(task.subjectId).color;ctx.beginPath();ctx.arc(x+15,y+69+i*17,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#c9c0d2';ctx.fillText(task.title.slice(0,19),x+27,y+73+i*17);});if(events.length){ctx.fillStyle='#eb92b8';ctx.font='600 11px "Noto Sans TC",system-ui';ctx.fillText(events[0].name.slice(0,22),x+11,y+139);}});
+    ctx.fillStyle='#7f748f';ctx.font='500 15px system-ui';ctx.fillText('月總覽顯示每日主要任務、題量與學校事件；詳細內容請輸出日／週 PDF。',margin,h-28);return{canvas,pdfWidth:841.89,pdfHeight:595.28};
+  }
+
+  function buildPdf(pages){
+    const encoder=new TextEncoder();const chunks=[];let offset=0;const offsets=[0];
+    const push=(data)=>{const bytes=typeof data==='string'?encoder.encode(data):data;chunks.push(bytes);offset+=bytes.length;};
+    push('%PDF-1.4\n%âãÏÓ\n');
+    const objectCount=2+pages.length*3;
+    const obj=(number,bodyParts)=>{offsets[number]=offset;push(`${number} 0 obj\n`);bodyParts.forEach(push);push('\nendobj\n');};
+    obj(1,[`<< /Type /Catalog /Pages 2 0 R >>`]);
+    const kids=pages.map((_,i)=>`${3+i*3} 0 R`).join(' ');obj(2,[`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`]);
+    pages.forEach((page,i)=>{const pageObj=3+i*3,contentObj=pageObj+1,imageObj=pageObj+2;obj(pageObj,[`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${page.width} ${page.height}] /Resources << /XObject << /Im0 ${imageObj} 0 R >> >> /Contents ${contentObj} 0 R >>`]);const stream=`q\n${page.width} 0 0 ${page.height} 0 0 cm\n/Im0 Do\nQ\n`;obj(contentObj,[`<< /Length ${encoder.encode(stream).length} >>\nstream\n`,stream,'endstream']);obj(imageObj,[`<< /Type /XObject /Subtype /Image /Width ${page.width>700?1754:1240} /Height ${page.height>700?1754:1240} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.jpeg.length} >>\nstream\n`,page.jpeg,'\nendstream']);});
+    const xref=offset;push(`xref\n0 ${objectCount+1}\n0000000000 65535 f \n`);for(let i=1;i<=objectCount;i+=1)push(`${String(offsets[i]).padStart(10,'0')} 00000 n \n`);push(`trailer\n<< /Size ${objectCount+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+    const total=chunks.reduce((s,c)=>s+c.length,0),out=new Uint8Array(total);let cursor=0;chunks.forEach((chunk)=>{out.set(chunk,cursor);cursor+=chunk.length;});return new Blob([out],{type:'application/pdf'});
+  }
+
+  function loadDemo() {
+    state=initialState();state.settings={...state.settings,studentName:'奇異博士示範生',schoolName:'Lifeline 國中',startDate:dateKey(new Date()),examDate:'2027-05-15',weekdayMinutes:135,weekendMinutes:270,subjects:{chinese:'steady',english:'weak',math:'weak',science:'steady',social:'strong',writing:'steady'},resources:{handout:true,questionBank:true,reviewCourse:true,mockExam:true}};
+    state.events=buildExpectedEvents(state.settings);saveState();renderSettings();generatePlan();
+  }
+
+  function bindEvents() {
+    $('generateButton').addEventListener('click',generatePlan);$('generateSettingsButton').addEventListener('click',generatePlan);$('saveSettingsButton').addEventListener('click',()=>saveSettingsFromForm(false));$('demoButton').addEventListener('click',loadDemo);
+    $('collapseSettings').addEventListener('click',()=>{const body=$('settingsBody'),hidden=body.hidden;body.hidden=!hidden;$('collapseSettings').textContent=hidden?'−':'＋';});
+    document.querySelectorAll('.view-button').forEach((button)=>button.addEventListener('click',()=>{state.activeView=button.dataset.view;saveState();renderAll();}));
+    $('previousPeriod').addEventListener('click',()=>shiftPeriod(-1));$('nextPeriod').addEventListener('click',()=>shiftPeriod(1));$('todayButton').addEventListener('click',()=>{state.focusDate=dateKey(new Date());saveState();renderAll();});
+    $('periodLabel').addEventListener('click',()=>{const picker=$('focusDate');if(typeof picker.showPicker==='function')picker.showPicker();else picker.click();});$('focusDate').addEventListener('change',()=>{if(!$('focusDate').value)return;state.focusDate=$('focusDate').value;saveState();renderAll();});
+    $('addEventButton').addEventListener('click',()=>openEventDialog());$('eventForm').addEventListener('submit',saveEvent);$('deleteEventButton').addEventListener('click',deleteEvent);
+    $('exportJsonButton').addEventListener('click',exportJson);$('exportPdfButton').addEventListener('click',exportCurrentPdf);
+    ['examDate','startDate'].forEach((id)=>$(id).addEventListener('change',()=>{const temp=readSettingsForm();if(!validateSettings(temp)){state.settings=temp;renderHeader();}}));
+  }
+
+  function renderAll(){renderHeader();renderMetrics();renderCalendar();renderEvents();renderSubjectProgress();}
+
+  renderSettings();bindEvents();renderAll();
+})();
