@@ -1,0 +1,137 @@
+    saveState(); renderAll(); showToast('規劃設定已儲存。'); return true;
+  }
+
+  function subjectWeight(subjectId) {
+    return ({weak:1.45,steady:1,strong:.72})[state.settings.subjects[subjectId]]||1;
+  }
+
+  function resourceForSlot(phase,slotIndex,dayIndex,isWeekend) {
+    const enabled=RESOURCES.filter((resource)=>state.settings.resources[resource.id]);
+    const pool=[];
+    enabled.forEach((resource)=>{
+      let weight=phase.ratios[resource.id]||.1;
+      if (resource.id==='mockExam'&&(!isWeekend||slotIndex>0)) weight*=.25;
+      const count=Math.max(1,Math.round(weight*20));
+      for(let i=0;i<count;i+=1) pool.push(resource.id);
+    });
+    if (!pool.length) return 'questionBank';
+    const seed=(dayIndex*13+slotIndex*7)%pool.length;
+    return pool[seed];
+  }
+
+  function taskDuration(resource,phase,isWeekend) {
+    if(resource==='mockExam') return isWeekend?(phase.id==='sprint'?120:80):45;
+    if(resource==='reviewCourse') return phase.id==='taper'?35:45;
+    if(resource==='handout') return 40;
+    return phase.id==='sprint'?45:40;
+  }
+
+  function taskPayload(subject,resource,duration,phase,sequence) {
+    const level=state.settings.subjects[subject.id];
+    const levelFactor=level==='weak'?1.15:level==='strong'?.88:1;
+    if(resource==='handout') {
+      const pages=Math.max(3,Math.round(duration/7*levelFactor));
+      return {title:`${subject.name}｜核心講義`,detail:subject.handout,questions:0,pages,indicator:`完成 ${pages} 頁＋圈出 3 個不熟概念`};
+    }
+    if(resource==='reviewCourse') {
+      return {title:`${subject.name}｜複習課程`,detail:`${phase.name}重點整理與例題演練`,questions:Math.round(duration/5),pages:0,indicator:`完成課程並整理 5 條筆記＋2 題重做`};
+    }
+    if(resource==='mockExam') {
+      const full=duration>=80;
+      const questions=subject.id==='writing'?1:Math.round(subject.baseQuestions*(full?1:.55));
+      return {title:`${subject.name}｜${full?'個人模擬考':'限時模考單元'}`,detail:`完全比照計時，作答後安排至少 ${Math.round(duration*.45)} 分鐘檢討`,questions,pages:0,indicator:`完成 ${questions} 題／篇，錯題原因分類率 100%`};
+    }
+    const base=Math.round(subject.baseQuestions*(duration/45)*levelFactor*(phase.id==='sprint'?1.18:1));
+    const questions=subject.id==='writing'?1:Math.max(8,base+(sequence%3-1)*2);
+    return {title:`${subject.name}｜題庫訓練`,detail:`${phase.name}題組，先限時作答再逐題訂正`,questions,pages:0,indicator:subject.id==='writing'?'完成 1 篇限時寫作＋自評 4 指標':`完成 ${questions} 題，正確率至少 80%，錯題當日訂正`};
+  }
+
+  function generatePlan() {
+    const settings=readSettingsForm(); const error=validateSettings(settings); if(error){showToast(error);return;}
+    const datesChanged=settings.startDate!==state.settings.startDate||settings.examDate!==state.settings.examDate;
+    const customEvents=state.events.filter((event)=>!event.expected&&event.name!=='116年國中教育會考');
+    state.settings=settings;
+    if (datesChanged||!state.events.length) state.events=[...buildExpectedEvents(settings),...customEvents];
+    const tasks=[];
+    const start=getDate(settings.startDate), exam=getDate(settings.examDate);
+    let subjectCursor=0;
+    const weightedSubjects=SUBJECTS.flatMap((subject)=>Array.from({length:Math.max(1,Math.round(subjectWeight(subject.id)*4))},()=>subject.id));
+    for(let date=new Date(start),dayIndex=0;date<exam;date=addDays(date,1),dayIndex+=1){
+      const key=dateKey(date), impact=eventImpactOnDate(key), weekday=date.getDay(), isWeekend=weekday===0||weekday===6;
+      if (impact==='block'||weekday===settings.restDay) continue;
+      let available=isWeekend?settings.weekendMinutes:settings.weekdayMinutes;
+      if(impact==='light') available=Math.round(available*.5);
+      if(available<30) continue;
+      const phase=phaseForDate(key);
+      let maxBlocks=isWeekend?5:3;
+      if(phase.id==='taper') maxBlocks=Math.min(maxBlocks,3);
+      let used=0;
+      for(let slot=0;slot<maxBlocks;slot+=1){
+        let resource=(isWeekend&&phase.id!=='foundation'&&settings.resources.mockExam&&dayIndex%14===0&&slot===0)?'mockExam':resourceForSlot(phase,slot,dayIndex,isWeekend);
+        if(resource==='mockExam'&&slot>0) resource='questionBank';
+        const subjectId=weightedSubjects[(subjectCursor+slot*2+dayIndex)%weightedSubjects.length];
+        const subject=subjectById(subjectId);
+        let duration=taskDuration(resource,phase,isWeekend);
+        if(used+duration>available){
+          duration=available-used;
+          if(duration<25) break;
+        }
+        const payload=taskPayload(subject,resource,duration,phase,dayIndex+slot);
+        const startMinute=(isWeekend?9*60:18*60+30)+used;
+        tasks.push({id:uid('task'),date:key,start:startMinute,end:startMinute+duration,subjectId,resource,phase:phase.id,duration,...payload,done:false,actualQuestions:0});
+        used+=duration+10; subjectCursor=(subjectCursor+1)%weightedSubjects.length;
+        if(used+25>available) break;
+      }
+    }
+    state.tasks=tasks; state.generatedAt=new Date().toISOString(); state.focusDate=settings.startDate; state.activeView='week'; saveState(); renderAll(); showToast(`已產生 ${tasks.length} 個全科衝刺任務。`);
+  }
+
+  function tasksForDate(key) { return state.tasks.filter((task)=>task.date===key).sort((a,b)=>a.start-b.start); }
+  function completionStats(tasks=state.tasks) {
+    const done=tasks.filter((task)=>task.done); const questions=tasks.reduce((s,t)=>s+(t.questions||0),0); const doneQuestions=done.reduce((s,t)=>s+(t.actualQuestions||t.questions||0),0);
+    const minutes=tasks.reduce((s,t)=>s+t.duration,0),doneMinutes=done.reduce((s,t)=>s+t.duration,0);
+    return {total:tasks.length,done:done.length,rate:tasks.length?Math.round(done.length/tasks.length*100):0,questions,doneQuestions,minutes,doneMinutes,mocks:tasks.filter((t)=>t.resource==='mockExam').length,doneMocks:done.filter((t)=>t.resource==='mockExam').length};
+  }
+
+  function renderHeader() {
+    const remaining=daysBetween(dateKey(new Date()),state.settings.examDate);
+    $('countdownDays').textContent=remaining>=0?`${remaining} 天`:'已結束';
+    $('examDateLabel').textContent=`${formatDate(state.settings.examDate,{year:true,weekday:true})}`;
+    const phase=phaseForDate(clampDateKey(state.focusDate)); $('phaseLabel').textContent=phase.name; $('phaseDetail').textContent=phase.detail; $('phaseProgress').style.width=`${phaseProgress()}%`;
+  }
+  function clampDateKey(key){ if(key<state.settings.startDate)return state.settings.startDate;if(key>state.settings.examDate)return state.settings.examDate;return key; }
+
+  function renderMetrics() {
+    const stats=completionStats();
+    $('completionRate').textContent=`${stats.rate}%`; $('completionDetail').textContent=`${stats.done} / ${stats.total} 個任務`;
+    $('questionTotal').textContent=stats.questions.toLocaleString('zh-TW'); $('questionDetail').textContent=`完成 ${stats.doneQuestions.toLocaleString('zh-TW')} 題`;
+    $('plannedHours').textContent=`${(stats.minutes/60).toFixed(1)}h`; $('completedHours').textContent=`完成 ${(stats.doneMinutes/60).toFixed(1)}h`;
+    $('mockTotal').textContent=stats.mocks; $('mockDetail').textContent=`完成 ${stats.doneMocks} 回`;
+    $('planStatus').textContent=state.generatedAt?'規劃運作中':'尚未產生';
+  }
+
+  function renderSubjectProgress() {
+    $('subjectProgressList').innerHTML=SUBJECTS.map((subject)=>{
+      const tasks=state.tasks.filter((task)=>task.subjectId===subject.id),stats=completionStats(tasks),q=tasks.reduce((s,t)=>s+(t.questions||0),0);
+      return `<article class="subject-progress" style="--subject-color:${subject.color}"><div class="subject-progress-head"><strong>${subject.name}</strong><span>${stats.done}/${stats.total} · ${stats.rate}%</span></div><div class="progress-track"><i style="width:${stats.rate}%"></i></div><small>規劃題量 ${q} 題 · 模考 ${stats.mocks} 回 · ${state.settings.subjects[subject.id]==='weak'?'補強優先':state.settings.subjects[subject.id]==='strong'?'維持手感':'穩定推進'}</small></article>`;
+    }).join('');
+  }
+
+  function renderEvents() {
+    const events=[...state.events].sort((a,b)=>a.start.localeCompare(b.start));
+    $('eventList').innerHTML=events.length?events.map((event)=>`<article class="event-item"><span class="event-date">${formatDate(event.start)}${event.end!==event.start?`<br>～${formatDate(event.end)}`:''}</span><div class="event-main"><strong>${escapeHtml(event.name)}${event.expected?'（預期）':''}</strong><span>${event.type} · ${event.impact==='block'?'暫停練習':event.impact==='light'?'減量 50%':'僅提醒'}</span></div><button class="event-edit" type="button" data-edit-event="${event.id}">⋯</button></article>`).join(''):'<div class="empty-state">尚無重要事件。</div>';
+    document.querySelectorAll('[data-edit-event]').forEach((button)=>button.addEventListener('click',()=>openEventDialog(button.dataset.editEvent)));
+  }
+
+  function periodDates() {
+    const focus=getDate(state.focusDate);
+    if(state.activeView==='day') return [focus];
+    if(state.activeView==='week'){const start=startOfWeek(focus);return Array.from({length:7},(_,i)=>addDays(start,i));}
+    const start=startOfMonthGrid(focus);return Array.from({length:42},(_,i)=>addDays(start,i));
+  }
+
+  function renderCalendar() {
+    document.querySelectorAll('.view-button').forEach((button)=>button.classList.toggle('active',button.dataset.view===state.activeView));
+    $('focusDate').value=state.focusDate;
+    if(state.activeView==='day') renderDayView(); else if(state.activeView==='week') renderWeekView(); else renderMonthView();
+  }
