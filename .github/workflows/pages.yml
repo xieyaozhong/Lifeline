@@ -39,6 +39,8 @@ jobs:
           node --check /tmp/junior-math-bank.js
           cat schedule-studio/date-export.*.part > /tmp/schedule-date-export.js
           node --check /tmp/schedule-date-export.js
+          cat doctor-strange/app.*.part > /tmp/doctor-strange.js
+          node --check /tmp/doctor-strange.js
           node --check schedule-studio/child-three-day-normalize.js
           node --check schedule-studio/child-three-day.js
           find . -type f -name '*.js' -not -path './.git/*' -print0 | xargs -0 -n1 node --check
@@ -65,6 +67,11 @@ jobs:
           test -f _site/self-training-checklist/question-bank.css
           test -f _site/self-training-checklist/question-bank-loader.js
           test -f _site/self-training-checklist/question-bank.04.part
+          test -f _site/doctor-strange/index.html
+          test -f _site/doctor-strange/style.css
+          test -f _site/doctor-strange/app-loader.js
+          test -f _site/doctor-strange/app.04.part
+          grep -q 'app-loader.js' _site/doctor-strange/index.html
           test -f _site/appointment-generator/index.html
           test -f _site/build-info.json
 
@@ -78,6 +85,7 @@ jobs:
             echo '- Project portal: `/Lifeline/portal/`'
             echo '- Schedule Studio + three-day child planner + image export: `/Lifeline/schedule-studio/`'
             echo '- Self-training checklist + math bank: `/Lifeline/self-training-checklist/`'
+            echo '- Doctor Strange exam sprint planner + PDF export: `/Lifeline/doctor-strange/`'
             echo '- Appointment Generator: `/Lifeline/appointment-generator/`'
             echo '- Commit: `${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"
