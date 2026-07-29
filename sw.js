@@ -1,4 +1,4 @@
-const CACHE = 'lifeline-suite-cache-v9';
+const CACHE = 'lifeline-suite-cache-v10';
 const BASE = new URL('./', self.location.href);
 const ASSETS = [
   './',
@@ -47,6 +47,14 @@ const ASSETS = [
   './self-training-checklist/question-bank.02.part',
   './self-training-checklist/question-bank.03.part',
   './self-training-checklist/question-bank.04.part',
+  './doctor-strange/',
+  './doctor-strange/index.html',
+  './doctor-strange/style.css',
+  './doctor-strange/app-loader.js',
+  './doctor-strange/app.01.part',
+  './doctor-strange/app.02.part',
+  './doctor-strange/app.03.part',
+  './doctor-strange/app.04.part',
   './appointment-generator/',
   './appointment-generator/index.html',
   './appointment-generator/style.css',
@@ -73,6 +81,7 @@ self.addEventListener('activate', (event) => {
 function offlineFallback(requestUrl) {
   const path = new URL(requestUrl).pathname;
   if (path.includes('/appointment-generator/')) return new URL('./appointment-generator/index.html', BASE).toString();
+  if (path.includes('/doctor-strange/')) return new URL('./doctor-strange/index.html', BASE).toString();
   if (path.includes('/self-training-checklist/')) return new URL('./self-training-checklist/index.html', BASE).toString();
   if (path.includes('/schedule-studio/')) return new URL('./schedule-studio/index.html', BASE).toString();
   if (path.includes('/portal/')) return new URL('./portal/index.html', BASE).toString();
