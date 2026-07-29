@@ -20,14 +20,16 @@
     { id: 'lifeline', name: '生命線', detail: '任務、生命價值與即時推薦', icon: '✦', href: '' },
     { id: 'schedule', name: '時序環', detail: '指定日期、三日兒童排課與精美圖片輸出', icon: '◷', href: 'schedule-studio/' },
     { id: 'training', name: '自主訓練自核單', detail: '嚴格排程、國中數學題庫、自核與回課分析', icon: '✓', href: 'self-training-checklist/' },
+    { id: 'doctor', name: '奇異博士', detail: '會考全科進度、日週月總覽與 PDF', icon: '◎', href: 'doctor-strange/' },
     { id: 'appointment', name: '約定產生器', detail: 'LINE 預約深連結與 QR Code', icon: '⌗', href: 'appointment-generator/' }
   ];
 
   const pathname = location.pathname.replace(/\/+$/, '/');
   const currentId = pathname.includes('/appointment-generator/') ? 'appointment'
-    : pathname.includes('/self-training-checklist/') ? 'training'
-      : pathname.includes('/schedule-studio/') ? 'schedule'
-        : pathname.includes('/portal/') ? 'portal' : 'lifeline';
+    : pathname.includes('/doctor-strange/') ? 'doctor'
+      : pathname.includes('/self-training-checklist/') ? 'training'
+        : pathname.includes('/schedule-studio/') ? 'schedule'
+          : pathname.includes('/portal/') ? 'portal' : 'lifeline';
 
   const resolve = (href) => new URL(href, rootUrl).href;
   const toggle = document.createElement('button');
@@ -48,7 +50,7 @@
       <div>
         <p class="project-shell-kicker">LIFELINE SUITE</p>
         <h2>專案工具箱</h2>
-        <p>在生命管理、課程安排、自主訓練與預約工具之間快速切換。</p>
+        <p>在生命管理、課程安排、會考衝刺、自主訓練與預約工具之間快速切換。</p>
       </div>
       <button class="project-shell-close" type="button" aria-label="關閉專案導覽">×</button>
     </div>
