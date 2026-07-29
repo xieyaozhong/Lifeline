@@ -54,12 +54,16 @@
     if (datesChanged||!state.events.length) state.events=[...buildExpectedEvents(settings),...customEvents];
     const tasks=[];
     const start=getDate(settings.startDate), exam=getDate(settings.examDate);
+    const [latestHour,latestMinute]=settings.latestEnd.split(':').map(Number);
+    const latestEndMinute=latestHour*60+latestMinute;
     let subjectCursor=0;
     const weightedSubjects=SUBJECTS.flatMap((subject)=>Array.from({length:Math.max(1,Math.round(subjectWeight(subject.id)*4))},()=>subject.id));
     for(let date=new Date(start),dayIndex=0;date<exam;date=addDays(date,1),dayIndex+=1){
       const key=dateKey(date), impact=eventImpactOnDate(key), weekday=date.getDay(), isWeekend=weekday===0||weekday===6;
       if (impact==='block'||weekday===settings.restDay) continue;
+      const dayStart=isWeekend?9*60:18*60+30;
       let available=isWeekend?settings.weekendMinutes:settings.weekdayMinutes;
+      available=Math.min(available,Math.max(0,latestEndMinute-dayStart));
       if(impact==='light') available=Math.round(available*.5);
       if(available<30) continue;
       const phase=phaseForDate(key);
@@ -77,7 +81,7 @@
           if(duration<25) break;
         }
         const payload=taskPayload(subject,resource,duration,phase,dayIndex+slot);
-        const startMinute=(isWeekend?9*60:18*60+30)+used;
+        const startMinute=dayStart+used;
         tasks.push({id:uid('task'),date:key,start:startMinute,end:startMinute+duration,subjectId,resource,phase:phase.id,duration,...payload,done:false,actualQuestions:0});
         used+=duration+10; subjectCursor=(subjectCursor+1)%weightedSubjects.length;
         if(used+25>available) break;
