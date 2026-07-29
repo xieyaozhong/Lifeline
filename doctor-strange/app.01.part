@@ -1,0 +1,150 @@
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'lifeline-doctor-strange-v1';
+  const SUBJECTS = [
+    { id:'chinese', name:'國文', short:'國', color:'#e89db9', baseQuestions:22, handout:'閱讀策略、字音字形、文意與國學常識' },
+    { id:'english', name:'英語', short:'英', color:'#a895ee', baseQuestions:24, handout:'單字、文法、克漏字與閱讀理解' },
+    { id:'math', name:'數學', short:'數', color:'#79aef0', baseQuestions:20, handout:'數與代數、幾何、函數與資料分析' },
+    { id:'science', name:'自然', short:'自', color:'#82d5ca', baseQuestions:24, handout:'生物、理化、地科與實驗判讀' },
+    { id:'social', name:'社會', short:'社', color:'#e7ca86', baseQuestions:26, handout:'歷史、地理、公民與圖表判讀' },
+    { id:'writing', name:'寫作', short:'寫', color:'#9bd28e', baseQuestions:1, handout:'審題、立意、段落、素材與限時成文' }
+  ];
+  const RESOURCES = [
+    { id:'handout', name:'各科講義', icon:'▤' },
+    { id:'questionBank', name:'題庫訓練', icon:'⌁' },
+    { id:'reviewCourse', name:'複習課程', icon:'◉' },
+    { id:'mockExam', name:'個人模擬考', icon:'◇' }
+  ];
+  const PHASES = [
+    { id:'foundation', name:'基礎建構', detail:'補齊觀念、完成核心講義與基礎題型', ratios:{handout:.38,questionBank:.38,reviewCourse:.20,mockExam:.04} },
+    { id:'integration', name:'整合強化', detail:'跨章題組、錯題整理與週期性模考', ratios:{handout:.20,questionBank:.46,reviewCourse:.20,mockExam:.14} },
+    { id:'sprint', name:'會考衝刺', detail:'歷屆與仿真題、限時作答及弱點回補', ratios:{handout:.10,questionBank:.44,reviewCourse:.16,mockExam:.30} },
+    { id:'taper', name:'最後調整', detail:'維持手感、整理公式與控制作息', ratios:{handout:.18,questionBank:.32,reviewCourse:.25,mockExam:.25} }
+  ];
+  const $ = (id) => document.getElementById(id);
+  const pad = (value) => String(value).padStart(2,'0');
+  const dateKey = (date) => `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+  const getDate = (key) => { const [y,m,d] = String(key).split('-').map(Number); return new Date(y,m-1,d); };
+  const addDays = (date, amount) => { const result = new Date(date); result.setDate(result.getDate()+amount); result.setHours(0,0,0,0); return result; };
+  const daysBetween = (a,b) => Math.ceil((getDate(b)-getDate(a))/86400000);
+  const clamp = (value,min,max) => Math.min(max,Math.max(min,value));
+  const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+  const minutesToTime = (minutes) => `${pad(Math.floor(minutes/60)%24)}:${pad(minutes%60)}`;
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g,(ch)=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  const formatDate = (key, options={}) => new Intl.DateTimeFormat('zh-TW',{year:options.year?'numeric':undefined,month:options.month||'numeric',day:'numeric',weekday:options.weekday?'short':undefined}).format(getDate(key));
+  const startOfWeek = (date) => { const result = new Date(date); const day = result.getDay(); result.setDate(result.getDate() - (day===0?6:day-1)); result.setHours(0,0,0,0); return result; };
+  const startOfMonthGrid = (date) => startOfWeek(new Date(date.getFullYear(),date.getMonth(),1));
+
+  function defaultSettings() {
+    return {
+      studentName:'會考衝刺生', schoolName:'', startDate:dateKey(new Date()), examDate:'2027-05-15',
+      weekdayMinutes:120, weekendMinutes:240, restDay:0, latestEnd:'21:30',
+      subjects:Object.fromEntries(SUBJECTS.map((subject,index)=>[subject.id,index===2?'weak':'steady'])),
+      resources:Object.fromEntries(RESOURCES.map((resource)=>[resource.id,true]))
+    };
+  }
+
+  function initialState() {
+    const settings = defaultSettings();
+    return {
+      version:1, settings, events:buildExpectedEvents(settings), tasks:[], focusDate:settings.startDate,
+      activeView:'week', generatedAt:null
+    };
+  }
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!saved || !saved.settings || !Array.isArray(saved.events) || !Array.isArray(saved.tasks)) return initialState();
+      return { ...initialState(), ...saved, settings:{...defaultSettings(),...saved.settings} };
+    } catch { return initialState(); }
+  }
+
+  let state = loadState();
+  let toastTimer = null;
+
+  function saveState() { localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+  function showToast(message) {
+    const toast = $('toast'); if (!toast) return;
+    toast.textContent = message; toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(()=>toast.classList.remove('show'),2800);
+  }
+  function subjectById(id) { return SUBJECTS.find((subject)=>subject.id===id) || SUBJECTS[0]; }
+  function phaseForDate(key) {
+    const total = Math.max(1,daysBetween(state.settings.startDate,state.settings.examDate));
+    const passed = clamp(daysBetween(state.settings.startDate,key),0,total);
+    const remaining = total-passed;
+    if (remaining<=7) return PHASES[3];
+    const ratio = passed/total;
+    if (ratio<.45) return PHASES[0];
+    if (ratio<.76) return PHASES[1];
+    return PHASES[2];
+  }
+  function phaseProgress(key=state.focusDate) {
+    const total=Math.max(1,daysBetween(state.settings.startDate,state.settings.examDate));
+    return clamp(daysBetween(state.settings.startDate,key)/total*100,0,100);
+  }
+
+  function buildExpectedEvents(settings) {
+    const start = getDate(settings.startDate);
+    const exam = getDate(settings.examDate);
+    const make = (name,startDate,endDate,impact,type,expected=true)=>({id:uid('event'),name,start:dateKey(startDate),end:dateKey(endDate),impact,type,expected});
+    const events = [];
+    events.push(make('預期第一次段考',addDays(start,56),addDays(start,57),'light','段考'));
+    events.push(make('預期第二次段考',addDays(start,112),addDays(start,113),'light','段考'));
+    events.push(make('第一次全科模擬考',addDays(exam,-140),addDays(exam,-139),'block','模擬考'));
+    events.push(make('第二次全科模擬考',addDays(exam,-84),addDays(exam,-83),'block','模擬考'));
+    events.push(make('校內總複習週',addDays(exam,-35),addDays(exam,-29),'light','校內活動'));
+    events.push(make('會考前調整週',addDays(exam,-7),addDays(exam,-1),'light','會考'));
+    events.push(make('116年國中教育會考',exam,addDays(exam,1),'block','會考',false));
+    return events.filter((event)=>event.end>=settings.startDate&&event.start<=settings.examDate);
+  }
+
+  function eventOnDate(key) { return state.events.filter((event)=>key>=event.start&&key<=event.end); }
+  function eventImpactOnDate(key) {
+    const events=eventOnDate(key);
+    if (events.some((event)=>event.impact==='block')) return 'block';
+    if (events.some((event)=>event.impact==='light')) return 'light';
+    return events.length?'notice':'none';
+  }
+
+  function renderSettings() {
+    const s=state.settings;
+    $('studentName').value=s.studentName; $('schoolName').value=s.schoolName; $('startDate').value=s.startDate; $('examDate').value=s.examDate;
+    $('weekdayMinutes').value=s.weekdayMinutes; $('weekendMinutes').value=s.weekendMinutes; $('restDay').value=String(s.restDay); $('latestEnd').value=s.latestEnd;
+    $('subjectSettings').innerHTML=SUBJECTS.map((subject)=>`
+      <label class="subject-setting" style="--subject-color:${subject.color}"><span><strong>${subject.name}</strong><small>${subject.handout}</small></span>
+      <select data-subject-level="${subject.id}"><option value="weak" ${s.subjects[subject.id]==='weak'?'selected':''}>待補強</option><option value="steady" ${s.subjects[subject.id]==='steady'?'selected':''}>穩定</option><option value="strong" ${s.subjects[subject.id]==='strong'?'selected':''}>優勢</option></select></label>`).join('');
+    $('resourceToggles').innerHTML=RESOURCES.map((resource)=>`<label class="resource-toggle"><input type="checkbox" data-resource="${resource.id}" ${s.resources[resource.id]?'checked':''}/><span>${resource.icon} ${resource.name}</span></label>`).join('');
+  }
+
+  function readSettingsForm() {
+    const settings={
+      ...state.settings,
+      studentName:$('studentName').value.trim()||'會考衝刺生', schoolName:$('schoolName').value.trim(),
+      startDate:$('startDate').value, examDate:$('examDate').value,
+      weekdayMinutes:clamp(Number($('weekdayMinutes').value)||120,30,360), weekendMinutes:clamp(Number($('weekendMinutes').value)||240,60,600),
+      restDay:Number($('restDay').value), latestEnd:$('latestEnd').value,
+      subjects:{},resources:{}
+    };
+    document.querySelectorAll('[data-subject-level]').forEach((select)=>settings.subjects[select.dataset.subjectLevel]=select.value);
+    document.querySelectorAll('[data-resource]').forEach((input)=>settings.resources[input.dataset.resource]=input.checked);
+    return settings;
+  }
+
+  function validateSettings(settings) {
+    if (!settings.startDate||!settings.examDate) return '請設定開始日期與會考日期。';
+    if (settings.examDate<=settings.startDate) return '會考日期必須晚於開始日期。';
+    if (!Object.values(settings.resources).some(Boolean)) return '至少要開啟一種規劃內容。';
+    return '';
+  }
+
+  function saveSettingsFromForm(rebuildEvents=false) {
+    const settings=readSettingsForm();
+    const error=validateSettings(settings); if (error){showToast(error);return false;}
+    const datesChanged=settings.startDate!==state.settings.startDate||settings.examDate!==state.settings.examDate;
+    const customEvents=state.events.filter((event)=>!event.expected&&event.name!=='116年國中教育會考');
+    state.settings=settings;
+    if (rebuildEvents||datesChanged) state.events=[...buildExpectedEvents(settings),...customEvents];
+    if (!state.focusDate||state.focusDate<settings.startDate||state.focusDate>settings.examDate) state.focusDate=settings.startDate;
