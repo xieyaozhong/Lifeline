@@ -20,6 +20,7 @@ DIRECTORIES = [
     "schedule-studio",
     "appointment-generator",
     "self-training-checklist",
+    "doctor-strange",
 ]
 
 
@@ -102,6 +103,7 @@ def write_build_info() -> None:
             "schedule-studio",
             "appointment-generator",
             "self-training-checklist",
+            "doctor-strange",
         ],
     }
     (OUTPUT / "build-info.json").write_text(
