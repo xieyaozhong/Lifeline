@@ -66,6 +66,10 @@ def main() -> int:
         *[ROOT / "schedule-studio" / f"date-export.{index:02d}.part" for index in range(1, 5)],
         ROOT / "appointment-generator/index.html",
         ROOT / "self-training-checklist/index.html",
+        ROOT / "doctor-strange/index.html",
+        ROOT / "doctor-strange/style.css",
+        ROOT / "doctor-strange/app-loader.js",
+        *[ROOT / "doctor-strange" / f"app.{index:02d}.part" for index in range(1, 5)],
     ]
     for path in required:
         if not path.exists():
