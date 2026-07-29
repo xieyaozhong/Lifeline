@@ -1,0 +1,82 @@
+
+  function renderDayView() {
+    const key=state.focusDate,tasks=tasksForDate(key),events=eventOnDate(key),stats=completionStats(tasks),phase=phaseForDate(key);
+    $('periodLabel').textContent=formatDate(key,{year:true,weekday:true});
+    $('calendarView').innerHTML=`<div class="day-view"><section><div class="day-head"><h3>${formatDate(key,{year:true,weekday:true})}</h3><p>${phase.name} · ${tasks.length?`${tasks.length} 個任務，${Math.round(stats.minutes)} 分鐘`:'這一天沒有安排練習'}</p></div><div class="task-list">${tasks.length?tasks.map(taskHtml).join(''):'<div class="empty-state">這一天是休息日、事件避讓日，或尚未產生規劃。</div>'}</div></section><aside class="day-summary"><h4>本日完成指標</h4><div class="summary-stat"><span>任務</span><strong>${stats.done}/${stats.total}</strong></div><div class="summary-stat"><span>題量</span><strong>${stats.questions} 題</strong></div><div class="summary-stat"><span>時間</span><strong>${stats.minutes} 分鐘</strong></div><div class="summary-stat"><span>階段</span><strong>${phase.name}</strong></div>${events.length?`<div class="event-warning">${events.map((event)=>`<strong>${escapeHtml(event.name)}</strong><br>${event.impact==='block'?'本日暫停練習':event.impact==='light'?'本日練習減量 50%':'請留意學校行程'}`).join('<br><br>')}</div>`:''}</aside></div>`;
+    bindTaskButtons();
+  }
+
+  function taskHtml(task) {
+    const subject=subjectById(task.subjectId);
+    return `<article class="task-card ${task.done?'done':''}" style="--subject-color:${subject.color}"><span class="task-time">${minutesToTime(task.start)}<br>${minutesToTime(task.end)}</span><div class="task-main"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.detail)}</span><div class="task-metrics"><i>${task.duration} 分鐘</i>${task.questions?`<i>${task.questions} 題</i>`:''}${task.pages?`<i>${task.pages} 頁</i>`:''}<i>${escapeHtml(task.indicator)}</i></div></div><button class="task-check" type="button" data-toggle-task="${task.id}" aria-label="切換完成">${task.done?'✓':'○'}</button></article>`;
+  }
+  function bindTaskButtons(){document.querySelectorAll('[data-toggle-task]').forEach((button)=>button.addEventListener('click',()=>toggleTask(button.dataset.toggleTask)));}
+
+  function renderWeekView() {
+    const dates=periodDates(),start=dateKey(dates[0]),end=dateKey(dates[6]);
+    $('periodLabel').textContent=`${formatDate(start,{month:'short'})}－${formatDate(end,{year:true})}`;
+    const today=dateKey(new Date());
+    $('calendarView').innerHTML=`<div class="week-grid">${dates.map((date)=>{const key=dateKey(date),tasks=tasksForDate(key),events=eventOnDate(key);return `<article class="week-day ${key===today?'today':''}"><h3>${new Intl.DateTimeFormat('zh-TW',{weekday:'short'}).format(date)}</h3><span>${date.getMonth()+1}/${date.getDate()} · ${tasks.reduce((s,t)=>s+t.duration,0)} 分</span>${events.map((event)=>`<div class="week-event">${escapeHtml(event.name)}</div>`).join('')}${tasks.map((task)=>{const subject=subjectById(task.subjectId);return `<button class="mini-task ${task.done?'done':''}" type="button" data-toggle-task="${task.id}" style="--subject-color:${subject.color}"><strong>${minutesToTime(task.start)} ${escapeHtml(task.title)}</strong><span>${task.questions?`${task.questions} 題 · `:''}${task.duration} 分鐘</span></button>`;}).join('')||'<div class="month-summary">休息／無排程</div>'}</article>`;}).join('')}</div>`;
+    bindTaskButtons();
+  }
+
+  function renderMonthView() {
+    const focus=getDate(state.focusDate),dates=periodDates();
+    $('periodLabel').textContent=new Intl.DateTimeFormat('zh-TW',{year:'numeric',month:'long'}).format(focus);
+    const weekdays=['一','二','三','四','五','六','日'],today=dateKey(new Date());
+    $('calendarView').innerHTML=`<div class="month-grid">${weekdays.map((day)=>`<div class="month-weekday">週${day}</div>`).join('')}${dates.map((date)=>{const key=dateKey(date),tasks=tasksForDate(key),events=eventOnDate(key),outside=date.getMonth()!==focus.getMonth(),stats=completionStats(tasks);return `<button class="month-cell ${outside?'outside':''} ${key===today?'today':''}" type="button" data-open-day="${key}"><div class="month-date"><strong>${date.getDate()}</strong><span>${stats.done}/${stats.total}</span></div><div class="month-dot-list">${tasks.slice(0,12).map((task)=>`<i class="month-dot" style="--subject-color:${subjectById(task.subjectId).color}"></i>`).join('')}</div><div class="month-summary">${tasks.length?`${tasks.length} 任務 · ${stats.questions} 題`:'休息／無排程'}</div>${events.length?`<div class="month-event">${escapeHtml(events[0].name)}</div>`:''}</button>`;}).join('')}</div>`;
+    document.querySelectorAll('[data-open-day]').forEach((button)=>button.addEventListener('click',()=>{state.focusDate=button.dataset.openDay;state.activeView='day';saveState();renderAll();}));
+  }
+
+  function toggleTask(id) { const task=state.tasks.find((item)=>item.id===id); if(!task)return;task.done=!task.done;task.actualQuestions=task.done?task.questions:0;saveState();renderAll(); }
+
+  function shiftPeriod(direction) {
+    const focus=getDate(state.focusDate);
+    if(state.activeView==='day') state.focusDate=dateKey(addDays(focus,direction));
+    else if(state.activeView==='week') state.focusDate=dateKey(addDays(focus,direction*7));
+    else state.focusDate=dateKey(new Date(focus.getFullYear(),focus.getMonth()+direction,Math.min(focus.getDate(),28)));
+    saveState();renderAll();
+  }
+
+  function openEventDialog(id=null) {
+    const event=id?state.events.find((item)=>item.id===id):null;
+    $('eventDialogTitle').textContent=event?'編輯重要事件':'新增重要事件'; $('eventId').value=event?.id||''; $('eventName').value=event?.name||'';
+    $('eventStart').value=event?.start||state.focusDate; $('eventEnd').value=event?.end||state.focusDate; $('eventImpact').value=event?.impact||'light'; $('eventType').value=event?.type||'其他';
+    $('deleteEventButton').classList.toggle('hidden',!event); $('eventDialog').showModal();
+  }
+  function saveEvent(eventObj) {
+    eventObj.preventDefault(); const id=$('eventId').value;
+    const item={id:id||uid('event'),name:$('eventName').value.trim(),start:$('eventStart').value,end:$('eventEnd').value,impact:$('eventImpact').value,type:$('eventType').value,expected:false};
+    if(item.end<item.start){showToast('事件結束日期不能早於開始日期。');return;}
+    state.events=id?state.events.map((event)=>event.id===id?item:event):[...state.events,item]; saveState();$('eventDialog').close();renderAll();showToast(id?'事件已更新。':'事件已新增。');
+  }
+  function deleteEvent() { const id=$('eventId').value;if(!id)return;if(!confirm('刪除此重要事件？'))return;state.events=state.events.filter((event)=>event.id!==id);saveState();$('eventDialog').close();renderAll();showToast('事件已刪除。'); }
+
+  function exportJson() {
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});downloadBlob(blob,`奇異博士-會考規劃-${dateKey(new Date())}.json`);showToast('規劃資料已匯出。');
+  }
+  function downloadBlob(blob,filename){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+
+  function roundedRect(ctx,x,y,w,h,r){const radius=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+radius,y);ctx.arcTo(x+w,y,x+w,y+h,radius);ctx.arcTo(x+w,y+h,x,y+h,radius);ctx.arcTo(x,y+h,x,y,radius);ctx.arcTo(x,y,x+w,y,radius);ctx.closePath();}
+  function drawBase(ctx,w,h,title,subtitle,landscape=false){
+    const bg=ctx.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#100923');bg.addColorStop(.58,'#1a1034');bg.addColorStop(1,'#071b22');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+    const glow=ctx.createRadialGradient(w*.75,0,0,w*.75,0,w*.65);glow.addColorStop(0,'rgba(124,85,203,.25)');glow.addColorStop(1,'rgba(124,85,203,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#e7ca86';ctx.font='800 22px system-ui';ctx.fillText('DOCTOR STRANGE · EXAM SPRINT',56,58);
+    ctx.fillStyle='#f8f3e8';ctx.font=`800 ${landscape?42:48}px "Noto Sans TC",system-ui`;ctx.fillText(title,56,116);
+    ctx.fillStyle='#a79db8';ctx.font='500 21px "Noto Sans TC",system-ui';ctx.fillText(subtitle,56,151);
+  }
+  function canvasToJpeg(canvas){return new Promise((resolve,reject)=>canvas.toBlob((blob)=>blob?blob.arrayBuffer().then(resolve):reject(new Error('圖片產生失敗')),'image/jpeg',.92));}
+
+  async function exportCurrentPdf() {
+    const button=$('exportPdfButton'),original=button.textContent;button.disabled=true;button.textContent='正在產生 PDF…';
+    try{
+      if(document.fonts?.ready) await document.fonts.ready;
+      const pages=state.activeView==='day'?[drawDayPdf()]:state.activeView==='week'?[drawWeekPdf()]:[drawMonthPdf()];
+      const specs=[];for(const item of pages){specs.push({jpeg:new Uint8Array(await canvasToJpeg(item.canvas)),width:item.pdfWidth,height:item.pdfHeight});}
+      const pdf=buildPdf(specs);downloadBlob(pdf,`奇異博士-${state.activeView==='day'?'單日':state.activeView==='week'?'週課表':'月總覽'}-${state.focusDate}.pdf`);showToast('PDF 課表已輸出。');
+    }catch(error){console.error(error);showToast('PDF 輸出失敗，請重新整理後再試。');}finally{button.disabled=false;button.textContent=original;}
+  }
+
+  function drawDayPdf(){
+    const w=1240,h=1754,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');const key=state.focusDate,tasks=tasksForDate(key),stats=completionStats(tasks);
+    drawBase(ctx,w,h,'奇異博士｜單日衝刺課表',`${state.settings.studentName} · ${formatDate(key,{year:true,weekday:true})}`);
