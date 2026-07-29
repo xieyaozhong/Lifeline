@@ -1,7 +1,7 @@
 {
   "name": "生命線 Lifeline Suite",
   "short_name": "生命線",
-  "description": "整合任務、生命價值、課程安排、自主訓練與 LINE 預約工具。",
+  "description": "整合任務、生命價值、課程安排、會考衝刺、自主訓練與 LINE 預約工具。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -39,6 +39,13 @@
       "short_name": "訓練自核",
       "description": "規劃每日題量、記錄完成狀況並分析下次作業",
       "url": "./self-training-checklist/",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "奇異博士",
+      "short_name": "會考衝刺",
+      "description": "自動產生會考全科日、週、月複習進度與 PDF",
+      "url": "./doctor-strange/",
       "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
